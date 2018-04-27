@@ -146,6 +146,79 @@ public:
     // Destroy the object and its contents.
     ~Object();
 
+//-------------------------------  Value Access  -------------------------------
+public:
+    // Retrieve the contained value by value.
+    // Throws an exception if the contained value cannot be converted to type
+    // T_Related.
+    template <
+        typename T_Related = Detail::DefaultReturnType<T const>,
+        Detail::EnableIf<
+            Detail::IsRelated<T_Related, T>::value &&
+            !std::is_void<T_Related>::value &&
+            !std::is_reference<T_Related>::value
+        >...
+    >
+    T_Related get() const;
+
+    // Retrieve the contained value by mutable reference.
+    // Throws an exception if the contained value cannot be converted to type
+    // T_Related.
+    template <
+        typename T_Related = Detail::DefaultReturnType<T>,
+        Detail::EnableIf<
+            Detail::IsRelated<T_Related, T>::value &&
+            std::is_reference<T_Related>::value &&
+            !std::is_const<Detail::Decompose<T_Related>>::value
+        >...
+    >
+    T_Related get();
+
+    // Retrieve the contained value by constant reference.
+    // Throws an exception if the contained value cannot be converted to type
+    // T_Related.
+    template <
+        typename T_Related = Detail::DefaultReturnType<T const>,
+        Detail::EnableIf<
+            Detail::IsRelated<T_Related, T>::value &&
+            std::is_reference<T_Related>::value &&
+            std::is_const<Detail::Decompose<T_Related>>::value
+        >...
+    >
+    T_Related get() const;
+
+    // Set the contained value without changing its reflected type.
+    // Throws an exception if the contained value is constant or cannot be set
+    // from type T_Derived.
+    template <
+        typename T_Derived,
+        Detail::EnableIf<
+            Detail::IsDerived<T_Derived, T>::value &&
+            !Detail::IsSameTemplate<T_Derived, Object<T>>::value &&
+            !Detail::IsSameTemplate<T_Derived, Value<T>>::value &&
+            !Detail::IsSameTemplate<T_Derived, Reference<T>>::value
+        >...
+    >
+    void set(T_Derived &&value);
+
+    // Set the contained value from another object without changing its
+    // reflected type.
+    // Throws an exception if the contained value is constant or cannot be set
+    // from the other object's value.
+    template <
+        typename T_Reflected,
+        Detail::EnableIf<
+            Detail::IsRelated<
+                typename std::decay<T_Reflected>::type::element_type, T
+            >::value &&
+            (Detail::IsSameTemplate<T_Reflected, Object<T>>::value ||
+             Detail::IsSameTemplate<T_Reflected, Value<T>>::value ||
+             Detail::IsSameTemplate<T_Reflected, Reference<T>>::value
+            )
+        >...
+    >
+    void set(T_Reflected &&value);
+
 //-----------------------------  Private Members  ------------------------------
 private:
     template <typename T_Other>

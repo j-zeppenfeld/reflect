@@ -1,6 +1,7 @@
 // Copyright (c) 2018 Johannes Zeppenfeld
 // Distributed under the MIT license, see LICENSE file in repository root.
 
+#include "detail/type_info.h"
 #include "detail/value_accessor.h"
 
 //------------------------------------------------------------------------------
@@ -168,6 +169,185 @@ Object<T>::Object() {
 template <typename T>
 Object<T>::~Object() {
     _accessor->deallocate(_storage);
+}
+
+//-------------------------------  Value Access  -------------------------------
+
+// Retrieve the contained value by value.
+// Throws an exception if the contained value cannot be converted to type
+// T_Related.
+template <typename T>
+template <
+    typename T_Related,
+    Detail::EnableIf<
+        Detail::IsRelated<T_Related, T>::value &&
+        !std::is_void<T_Related>::value &&
+        !std::is_reference<T_Related>::value
+    >...
+>
+T_Related Object<T>::get() const {
+    using T_Value = typename std::decay<T_Related>::type;
+
+    // If the accessed type does not exactly match T_Value, it is not possible
+    // to create an appropriate buffer for the accessor's get method here.
+    // Without a buffer, the accessor must return a reference, which can most
+    // easily be retrieved using the get method returning a constant reference.
+    if(_accessor->getTypeInfo() != Detail::TypeInfo::instance<T_Value>()) {
+        return get<T_Value const &>();
+    }
+
+    // Buffer into which the accessor can construct an instance of the returned
+    // type. This is needed if the accessor can only return by value.
+    struct Buffer {
+        union { T_Value _value; };
+        bool _constructed;
+
+        Buffer() : _constructed(false) { }
+        ~Buffer() { if(_constructed) _value.~T_Value(); }
+    } buffer;
+
+    // Retrieve value from storage using the accessor.
+    auto value = _accessor->get(_storage, &buffer._value);
+    if(value._value == &buffer._value) {
+        buffer._constructed = true;
+        return std::move(buffer._value);
+    } else {
+        return *static_cast<T_Value const *>(value._value);
+    }
+}
+
+// Retrieve the contained value by mutable reference.
+// Throws an exception if the contained value cannot be converted to type
+// T_Related.
+template <typename T>
+template <
+    typename T_Related,
+    Detail::EnableIf<
+        Detail::IsRelated<T_Related, T>::value &&
+        std::is_reference<T_Related>::value &&
+        !std::is_const<Detail::Decompose<T_Related>>::value
+    >...
+>
+T_Related Object<T>::get() {
+    using T_Value = typename std::decay<T_Related>::type;
+
+    // TODO: Allow type conversion.
+    if(_accessor->getTypeInfo() != Detail::TypeInfo::instance<T_Value>()) {
+        throw std::runtime_error(
+            "Accessing object value as wrong type."
+        );
+    }
+
+    // Retrieve value from storage using the accessor.
+    auto value = _accessor->get(_storage);
+    if(value._constant) {
+        throw std::runtime_error(
+            "Retrieving mutable reference to constant object value."
+        );
+    }
+    return *static_cast<T_Value *>(value._value);
+}
+
+// Retrieve the contained value by constant reference.
+// Throws an exception if the contained value cannot be converted to type
+// T_Related.
+template <typename T>
+template <
+    typename T_Related,
+    Detail::EnableIf<
+        Detail::IsRelated<T_Related, T>::value &&
+        std::is_reference<T_Related>::value &&
+        std::is_const<Detail::Decompose<T_Related>>::value
+    >...
+>
+T_Related Object<T>::get() const {
+    using T_Value = typename std::decay<T_Related>::type;
+
+    // TODO: Allow type conversion.
+    if(_accessor->getTypeInfo() != Detail::TypeInfo::instance<T_Value>()) {
+        throw std::runtime_error(
+            "Accessing object value as wrong type."
+        );
+    }
+
+    // Retrieve value from storage using the accessor.
+    auto value = _accessor->get(_storage);
+    return *static_cast<T_Value const *>(value._value);
+}
+
+// Set the contained value without changing its reflected type.
+// Throws an exception if the contained value is constant or cannot be set
+// from type T_Derived.
+template <typename T>
+template <
+    typename T_Derived,
+    Detail::EnableIf<
+        Detail::IsDerived<T_Derived, T>::value &&
+        !Detail::IsSameTemplate<T_Derived, Object<T>>::value &&
+        !Detail::IsSameTemplate<T_Derived, Value<T>>::value &&
+        !Detail::IsSameTemplate<T_Derived, Reference<T>>::value
+    >...
+>
+void Object<T>::set(T_Derived &&value) {
+    using T_Value = typename std::decay<T_Derived>::type;
+
+    // TODO: Allow type conversion.
+    if(_accessor->getTypeInfo() != Detail::TypeInfo::instance<T_Value>()) {
+        throw std::runtime_error(
+            "Setting object value from incompatible type."
+        );
+    }
+
+    // Assign value to storage using the accessor.
+    if(!(std::is_lvalue_reference<T_Derived>::value
+         ? _accessor->set(_storage, &value)
+         : _accessor->move(_storage, &value)
+        )
+    ) {
+        throw std::runtime_error(
+            "Setting constant object value."
+        );
+    }
+}
+
+// Set the contained value from another object without changing its
+// reflected type.
+// Throws an exception if the contained value is constant or cannot be set
+// from the other object's value.
+template <typename T>
+template <
+    typename T_Reflected,
+    Detail::EnableIf<
+        Detail::IsRelated<
+            typename std::decay<T_Reflected>::type::element_type, T
+        >::value &&
+        (Detail::IsSameTemplate<T_Reflected, Object<T>>::value ||
+            Detail::IsSameTemplate<T_Reflected, Value<T>>::value ||
+            Detail::IsSameTemplate<T_Reflected, Reference<T>>::value
+        )
+    >...
+>
+void Object<T>::set(T_Reflected &&value) {
+    // TODO: Allow type conversion.
+    if(_accessor->getTypeInfo() != value._accessor->getTypeInfo()) {
+        throw std::runtime_error(
+            "Setting object value from incompatible type."
+        );
+    }
+
+    // Retrieve value from storage using the accessor.
+    auto accessed = value._accessor->get(value._storage);
+
+    // Assign value to storage using the accessor.
+    if(!((std::is_lvalue_reference<T_Reflected>::value || accessed._constant)
+         ? _accessor->set(_storage, accessed._value)
+         : _accessor->move(_storage, accessed._value)
+        )
+    ) {
+        throw std::runtime_error(
+            "Setting constant object value."
+        );
+    }
 }
 
 }

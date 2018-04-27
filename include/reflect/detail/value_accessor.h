@@ -6,6 +6,7 @@
 
 #include "accessor.h"
 #include "storage.h"
+#include "type_info.h"
 
 // std::decay, std::is_same et al.
 #include <type_traits>
@@ -26,12 +27,17 @@ class ValueAccessor : public Accessor {
                   "Internal error: Accessor instance must be decomposed.");
 
 public:
+    // Default constructible.
+    ValueAccessor() : Accessor(TypeInfo::instance<T>()) { }
+
     // Retrieve the global instance of this accessor.
     static Accessor const *instance() {
         static ValueAccessor accessor;
         return &accessor;
     }
 
+//--------------------------------  Allocation  --------------------------------
+public:
     // Allocate a copy of source within target.
     Accessor const *allocateCopy(Storage const &source,
                                  Storage &target) const override {
@@ -63,6 +69,25 @@ public:
     void deallocate(Storage &storage) const override {
         storage.destruct<T>();
     }
+
+//-------------------------------  Value Access  -------------------------------
+public:
+    // Retrieve the value in storage, which must be of the accessed type.
+    QualifiedValue get(Storage const &storage, void *buffer) const override {
+        return { &storage.get<T>(), false };
+    }
+
+    // Set the value in storage by copy-assigning the specified value.
+    bool set(Storage &storage, void const *value) const override {
+        storage.get<T>() = *static_cast<T const *>(value);
+        return true;
+    }
+
+    // Set the value in storage by move-assigning the specified value.
+    bool move(Storage &storage, void *value) const override {
+        storage.get<T>() = std::move(*static_cast<T *>(value));
+        return true;
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -75,12 +100,17 @@ class ValueAccessor<T &> : public Accessor {
                   "Internal error: Accessor instance must be decomposed.");
 
 public:
+    // Default constructible.
+    ValueAccessor() : Accessor(TypeInfo::instance<T>()) { }
+
     // Retrieve the global instance of this accessor.
     static Accessor const *instance() {
         static ValueAccessor accessor;
         return &accessor;
     }
 
+//--------------------------------  Allocation  --------------------------------
+public:
     // Allocate a copy of source within target.
     Accessor const *allocateCopy(Storage const &source,
                                  Storage &target) const override {
@@ -105,6 +135,25 @@ public:
     void deallocate(Storage &storage) const override {
         storage.destruct<T *>();
     }
+
+//-------------------------------  Value Access  -------------------------------
+public:
+    // Retrieve the value in storage, which must be of the accessed type.
+    QualifiedValue get(Storage const &storage, void *buffer) const override {
+        return { storage.get<T *>(), false };
+    }
+
+    // Set the value in storage by copy-assigning the specified value.
+    bool set(Storage &storage, void const *value) const override {
+        *storage.get<T *>() = *static_cast<T const *>(value);
+        return true;
+    }
+
+    // Set the value in storage by move-assigning the specified value.
+    bool move(Storage &storage, void *value) const override {
+        *storage.get<T *>() = std::move(*static_cast<T *>(value));
+        return true;
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -117,12 +166,17 @@ class ValueAccessor<T const &> : public Accessor {
                   "Internal error: Accessor instance must be decomposed.");
 
 public:
+    // Default constructible.
+    ValueAccessor() : Accessor(TypeInfo::instance<T>()) { }
+
     // Retrieve the global instance of this accessor.
     static Accessor const *instance() {
         static ValueAccessor accessor;
         return &accessor;
     }
 
+//--------------------------------  Allocation  --------------------------------
+public:
     // Allocate a copy of source within target.
     Accessor const *allocateCopy(Storage const &source,
                                  Storage &target) const override {
@@ -142,6 +196,13 @@ public:
     void deallocate(Storage &storage) const override {
         storage.destruct<T const *>();
     }
+
+//-------------------------------  Value Access  -------------------------------
+public:
+    // Retrieve the value in storage, which must be of the accessed type.
+    QualifiedValue get(Storage const &storage, void *buffer) const override {
+        return { const_cast<T *>(storage.get<T const *>()), true };
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -151,12 +212,17 @@ public:
 template <>
 class ValueAccessor<void> : public Accessor {
 public:
+    // Default constructible.
+    ValueAccessor() : Accessor(TypeInfo::instance<void>()) { }
+
     // Retrieve the global instance of this accessor.
     static Accessor const *instance() {
         static ValueAccessor accessor;
         return &accessor;
     }
 
+//--------------------------------  Allocation  --------------------------------
+public:
     // Allocate a copy of source within target.
     Accessor const *allocateCopy(Storage const &source,
                                  Storage &target) const override {
@@ -172,6 +238,13 @@ public:
 
     // Deallocate the value in storage.
     void deallocate(Storage &storage) const override { }
+
+//-------------------------------  Value Access  -------------------------------
+public:
+    // Retrieve the value in storage, which must be of the accessed type.
+    QualifiedValue get(Storage const &storage, void *buffer) const override {
+        return { nullptr, true };
+    }
 };
 
 } }

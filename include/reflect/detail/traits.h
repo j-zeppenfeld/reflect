@@ -82,6 +82,16 @@ struct DecomposeImpl {
 template <typename T>
 using Decompose = typename DecomposeImpl<T>::type;
 
+// Determine the default return type to use for type T.
+// Scalar types (including void) are returned by unqualified value, all other
+// types are returned by qualified reference.
+template <typename T>
+using DefaultReturnType = typename std::conditional<
+    std::is_scalar<T>::value || std::is_void<T>::value,
+    std::remove_cv<T>,
+    std::add_lvalue_reference<T>
+>::type::type;
+
 } }
 //--                      End Namespace Reflect::Detail                       --
 //------------------------------------------------------------------------------
