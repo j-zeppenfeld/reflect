@@ -95,7 +95,7 @@ public:
             !Detail::IsSameTemplate<T_Derived, Reference<T>>::value
         >...
     >
-    Object(std::reference_wrapper<T_Derived> other);
+    Object(std::reference_wrapper<T_Derived> &&other);
 
     // Construct object referencing the other object's value.
     // The reflected type of the object will be equivalent to that of other.
@@ -110,13 +110,7 @@ public:
             )
         >...
     >
-    Object(std::reference_wrapper<T_Reflected> other);
-
-    // Construct object referencing the other object's value.
-    // The reflected type of the object will be equivalent to that of other.
-    Object(std::reference_wrapper<Object<T>> other);
-
-    Object(std::reference_wrapper<Object<T> const> other);
+    Object(std::reference_wrapper<T_Reflected> &&other);
 
     // Construct object containing an instance of type T, forwarding the
     // provided arguments to T's constructor.

@@ -90,7 +90,7 @@ template <
         !Detail::IsSameTemplate<T_Derived, Reference<T>>::value
     >...
 >
-Object<T>::Object(std::reference_wrapper<T_Derived> other) {
+Object<T>::Object(std::reference_wrapper<T_Derived> &&other) {
     using T_Value = Detail::Decompose<T_Derived>;
     _accessor = Detail::ValueAccessor<T_Value &>::instance();
     _storage.construct<T_Value *>(&other.get());
@@ -110,26 +110,10 @@ template <
         )
     >...
 >
-Object<T>::Object(std::reference_wrapper<T_Reflected> other) {
+Object<T>::Object(std::reference_wrapper<T_Reflected> &&other) {
     // TODO: Verify that other's reflected type derives from T.
     _accessor = other.get()._accessor->allocateReference(
         other.get()._storage, _storage, std::is_const<T_Reflected>::value
-    );
-}
-
-// Construct object referencing the other object's value.
-// The reflected type of the object will be equivalent to that of other.
-template <typename T>
-Object<T>::Object(std::reference_wrapper<Object<T>> other) {
-    _accessor = other.get()._accessor->allocateReference(
-        other.get()._storage, _storage, false
-    );
-}
-
-template <typename T>
-Object<T>::Object(std::reference_wrapper<Object<T> const> other) {
-    _accessor = other.get()._accessor->allocateReference(
-        other.get()._storage, _storage, true
     );
 }
 
