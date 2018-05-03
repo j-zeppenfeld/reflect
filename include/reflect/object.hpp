@@ -22,9 +22,7 @@ template <
     Detail::EnableIf<
         Detail::IsDerived<T_Derived, T>::value &&
         std::is_constructible<T_Derived, T_Derived>::value &&
-        !Detail::IsSameTemplate<T_Derived, Object<T>>::value &&
-        !Detail::IsSameTemplate<T_Derived, Value<T>>::value &&
-        !Detail::IsSameTemplate<T_Derived, Reference<T>>::value &&
+        !Detail::IsReflected<T_Derived>::value &&
         !Detail::IsSameTemplate<T_Derived, std::reference_wrapper<T>>::value
     >...
 >
@@ -85,9 +83,7 @@ template <
     typename T_Derived,
     Detail::EnableIf<
         Detail::IsDerived<T_Derived, T>::value &&
-        !Detail::IsSameTemplate<T_Derived, Object<T>>::value &&
-        !Detail::IsSameTemplate<T_Derived, Value<T>>::value &&
-        !Detail::IsSameTemplate<T_Derived, Reference<T>>::value
+        !Detail::IsReflected<T_Derived>::value
     >...
 >
 Object<T>::Object(std::reference_wrapper<T_Derived> &&other) {
@@ -104,10 +100,7 @@ template <
     typename T_Reflected,
     Detail::EnableIf<
         Detail::IsRelated<typename T_Reflected::element_type, T>::value &&
-        (Detail::IsSameTemplate<T_Reflected, Object<T>>::value ||
-            Detail::IsSameTemplate<T_Reflected, Value<T>>::value ||
-            Detail::IsSameTemplate<T_Reflected, Reference<T>>::value
-        )
+        Detail::IsReflected<T_Reflected>::value
     >...
 >
 Object<T>::Object(std::reference_wrapper<T_Reflected> &&other) {
@@ -125,9 +118,7 @@ template <
     typename ...T_Args,
     Detail::EnableIf<
         std::is_constructible<T, T_Args...>::value &&
-        !Detail::IsSameTemplate<T_Args..., Object<T>>::value &&
-        !Detail::IsSameTemplate<T_Args..., Value<T>>::value &&
-        !Detail::IsSameTemplate<T_Args..., Reference<T>>::value &&
+        !Detail::IsReflected<T_Args...>::value &&
         !Detail::IsSameTemplate<T_Args..., std::reference_wrapper<T>>::value
     >...
 >
@@ -267,9 +258,7 @@ template <
     typename T_Derived,
     Detail::EnableIf<
         Detail::IsDerived<T_Derived, T>::value &&
-        !Detail::IsSameTemplate<T_Derived, Object<T>>::value &&
-        !Detail::IsSameTemplate<T_Derived, Value<T>>::value &&
-        !Detail::IsSameTemplate<T_Derived, Reference<T>>::value
+        !Detail::IsReflected<T_Derived>::value
     >...
 >
 void Object<T>::set(T_Derived &&value) {
@@ -305,10 +294,7 @@ template <
         Detail::IsRelated<
             typename std::decay<T_Reflected>::type::element_type, T
         >::value &&
-        (Detail::IsSameTemplate<T_Reflected, Object<T>>::value ||
-            Detail::IsSameTemplate<T_Reflected, Value<T>>::value ||
-            Detail::IsSameTemplate<T_Reflected, Reference<T>>::value
-        )
+        Detail::IsReflected<T_Reflected>::value
     >...
 >
 void Object<T>::set(T_Reflected &&value) {

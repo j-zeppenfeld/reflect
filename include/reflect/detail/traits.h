@@ -7,8 +7,17 @@
 #include <type_traits>
 
 //------------------------------------------------------------------------------
-//--                     Begin Namespace Reflect::Detail                      --
-namespace Reflect { namespace Detail {
+//--                         Begin Namespace Reflect                          --
+namespace Reflect {
+
+// Uses.
+template <typename T> class Object;
+template <typename T> class Value;
+template <typename T> class Reference;
+
+//------------------------------------------------------------------------------
+//--                          Begin Namespace Detail                          --
+namespace Detail {
 
 // Simplified enable_if for better usability.
 enum struct EnableIfType { };
@@ -61,6 +70,21 @@ struct IsSameTemplateImpl<T<U...>, T<V...>> : std::true_type { };
 template <typename ...T_Args>
 struct IsSameTemplate : IsSameTemplateImpl<typename std::decay<T_Args>::type...>
 { };
+
+// Determines whether the specified type contains a reflected value, i.e., is
+// one of Reflect::Object, Reflect::Value or Reflect::Reference.
+// Evaluates to false if more than one type is specified.
+template <typename ...>
+struct IsReflected : std::false_type { };
+
+template <typename T>
+struct IsReflected<T>
+: std::conditional<
+    IsSameTemplate<T, Object<void>>::value ||
+    IsSameTemplate<T, Value<void>>::value ||
+    IsSameTemplate<T, Reference<void>>::value,
+    std::true_type, std::false_type
+>::type { };
 
 // Applies lvalue-to-rvalue, array-to-pointer and function-to-pointer
 // conversions to type T. This is similar to std::decay, but does not remove
