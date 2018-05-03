@@ -92,21 +92,40 @@ Object<T>::Object(std::reference_wrapper<T_Derived> &&other) {
     _storage.construct<T_Value *>(&other.get());
 }
 
-// Construct object referencing the other object's value.
+// Construct object referencing the other object's reflected value.
 // The reflected type of the object will be equivalent to that of other.
 // Throws an exception if other's reflected type is not derived from T.
 template <typename T>
 template <
-    typename T_Reflected,
+    template <typename> class T_Reflected,
+    typename T_Related,
     Detail::EnableIf<
-        Detail::IsRelated<typename T_Reflected::element_type, T>::value &&
-        Detail::IsReflected<T_Reflected>::value
+        Detail::IsReflected<T_Reflected<T_Related>>::value &&
+        Detail::IsRelated<T_Related, T>::value
     >...
 >
-Object<T>::Object(std::reference_wrapper<T_Reflected> &&other) {
+Object<T>::Object(std::reference_wrapper<T_Reflected<T_Related>> &&other) {
     // TODO: Verify that other's reflected type derives from T.
     _accessor = other.get()._accessor->allocateReference(
-        other.get()._storage, _storage, std::is_const<T_Reflected>::value
+        other.get()._storage, _storage, false
+    );
+}
+
+template <typename T>
+template <
+    template <typename> class T_Reflected,
+    typename T_Related,
+    Detail::EnableIf<
+        Detail::IsReflected<T_Reflected<T_Related>>::value &&
+        Detail::IsRelated<T_Related, T>::value
+    >...
+>
+Object<T>::Object(
+    std::reference_wrapper<T_Reflected<T_Related> const> &&other
+) {
+    // TODO: Verify that other's reflected type derives from T.
+    _accessor = other.get()._accessor->allocateReference(
+        other.get()._storage, _storage, true
     );
 }
 
@@ -283,21 +302,20 @@ void Object<T>::set(T_Derived &&value) {
     }
 }
 
-// Set the contained value from another object without changing its
-// reflected type.
+// Set the contained value without changing its reflected type by copy-
+// assigning the contained value of another object.
 // Throws an exception if the contained value is constant or cannot be set
-// from the other object's value.
+// from the other object's reflected type.
 template <typename T>
 template <
-    typename T_Reflected,
+    template <typename> class T_Reflected,
+    typename T_Related,
     Detail::EnableIf<
-        Detail::IsRelated<
-            typename std::decay<T_Reflected>::type::element_type, T
-        >::value &&
-        Detail::IsReflected<T_Reflected>::value
+        Detail::IsReflected<T_Reflected<T_Related>>::value &&
+        Detail::IsRelated<T_Related, T>::value
     >...
 >
-void Object<T>::set(T_Reflected &&value) {
+void Object<T>::set(T_Reflected<T_Related> const &value) {
     // TODO: Allow type conversion.
     if(_accessor->getTypeInfo() != value._accessor->getTypeInfo()) {
         throw std::runtime_error(
@@ -309,7 +327,39 @@ void Object<T>::set(T_Reflected &&value) {
     auto accessed = value._accessor->get(value._storage);
 
     // Assign value to storage using the accessor.
-    if(!((std::is_lvalue_reference<T_Reflected>::value || accessed._constant)
+    if(!_accessor->set(_storage, accessed._value)) {
+        throw std::runtime_error(
+            "Setting constant object value."
+        );
+    }
+}
+
+// Set the contained value without changing its reflected type by move-
+// assigning the contained value of another object.
+// Throws an exception if the contained value is constant or cannot be set
+// from the other object's reflected type.
+template <typename T>
+template <
+    template <typename> class T_Reflected,
+    typename T_Related,
+    Detail::EnableIf<
+        Detail::IsReflected<T_Reflected<T_Related>>::value &&
+        Detail::IsRelated<T_Related, T>::value
+    >...
+>
+void Object<T>::set(T_Reflected<T_Related> &&value) {
+    // TODO: Allow type conversion.
+    if(_accessor->getTypeInfo() != value._accessor->getTypeInfo()) {
+        throw std::runtime_error(
+            "Setting object value from incompatible type."
+        );
+    }
+
+    // Retrieve value from storage using the accessor.
+    auto accessed = value._accessor->get(value._storage);
+
+    // Assign value to storage using the accessor.
+    if(!(accessed._constant
          ? _accessor->set(_storage, accessed._value)
          : _accessor->move(_storage, accessed._value)
         )

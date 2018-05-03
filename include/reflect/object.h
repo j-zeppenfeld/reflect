@@ -93,17 +93,28 @@ public:
     >
     Object(std::reference_wrapper<T_Derived> &&other);
 
-    // Construct object referencing the other object's value.
+    // Construct object referencing the other object's reflected value.
     // The reflected type of the object will be equivalent to that of other.
     // Throws an exception if the other object's value is not derived from T.
     template <
-        typename T_Reflected,
+        template <typename> class T_Reflected,
+        typename T_Related,
         Detail::EnableIf<
-            Detail::IsRelated<typename T_Reflected::element_type, T>::value &&
-            Detail::IsReflected<T_Reflected>::value
+            Detail::IsReflected<T_Reflected<T_Related>>::value &&
+            Detail::IsRelated<T_Related, T>::value
         >...
     >
-    Object(std::reference_wrapper<T_Reflected> &&other);
+    Object(std::reference_wrapper<T_Reflected<T_Related>> &&other);
+
+    template <
+        template <typename> class T_Reflected,
+        typename T_Related,
+        Detail::EnableIf<
+            Detail::IsReflected<T_Reflected<T_Related>>::value &&
+            Detail::IsRelated<T_Related, T>::value
+        >...
+    >
+    Object(std::reference_wrapper<T_Reflected<T_Related> const> &&other);
 
     // Construct object containing an instance of type T, forwarding the
     // provided arguments to T's constructor.
@@ -184,20 +195,33 @@ public:
     >
     void set(T_Derived &&value);
 
-    // Set the contained value from another object without changing its
-    // reflected type.
+    // Set the contained value without changing its reflected type by copy-
+    // assigning the contained value of another object.
     // Throws an exception if the contained value is constant or cannot be set
-    // from the other object's value.
+    // from the other object's reflected type.
     template <
-        typename T_Reflected,
+        template <typename> class T_Reflected,
+        typename T_Related,
         Detail::EnableIf<
-            Detail::IsRelated<
-                typename std::decay<T_Reflected>::type::element_type, T
-            >::value &&
-            Detail::IsReflected<T_Reflected>::value
+            Detail::IsReflected<T_Reflected<T_Related>>::value &&
+            Detail::IsRelated<T_Related, T>::value
         >...
     >
-    void set(T_Reflected &&value);
+    void set(T_Reflected<T_Related> const &value);
+
+    // Set the contained value without changing its reflected type by move-
+    // assigning the contained value of another object.
+    // Throws an exception if the contained value is constant or cannot be set
+    // from the other object's reflected type.
+    template <
+        template <typename> class T_Reflected,
+        typename T_Related,
+        Detail::EnableIf<
+            Detail::IsReflected<T_Reflected<T_Related>>::value &&
+            Detail::IsRelated<T_Related, T>::value
+        >...
+    >
+    void set(T_Reflected<T_Related> &&value);
 
 //-----------------------------  Private Members  ------------------------------
 private:
