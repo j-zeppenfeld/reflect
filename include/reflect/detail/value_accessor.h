@@ -36,6 +36,13 @@ public:
         return &accessor;
     }
 
+//----------------------------  Visitor Interface  -----------------------------
+public:
+    // Call visitor with a pointer to the value in storage.
+    void *accept(Storage const &storage, Visitor &visitor) const override {
+        return visitor.visit(&storage.get<T>(), false, false);
+    }
+
 //--------------------------------  Allocation  --------------------------------
 public:
     // Allocate a copy of source within target.
@@ -73,7 +80,8 @@ public:
 //-------------------------------  Value Access  -------------------------------
 public:
     // Retrieve the value in storage, which must be of the accessed type.
-    QualifiedValue get(Storage const &storage, void *buffer) const override {
+    QualifiedValue get(Storage const &storage,
+                       Buffer<void> *buffer) const override {
         return { &storage.get<T>(), false };
     }
 
@@ -107,6 +115,13 @@ public:
     static Accessor const *instance() {
         static ValueAccessor accessor;
         return &accessor;
+    }
+
+//----------------------------  Visitor Interface  -----------------------------
+public:
+    // Call visitor with a pointer to the value in storage.
+    void *accept(Storage const &storage, Visitor &visitor) const override {
+        return visitor.visit(storage.get<T *>(), false, false);
     }
 
 //--------------------------------  Allocation  --------------------------------
@@ -146,7 +161,8 @@ public:
 //-------------------------------  Value Access  -------------------------------
 public:
     // Retrieve the value in storage, which must be of the accessed type.
-    QualifiedValue get(Storage const &storage, void *buffer) const override {
+    QualifiedValue get(Storage const &storage,
+                       Buffer<void> *buffer) const override {
         return { storage.get<T *>(), false };
     }
 
@@ -182,6 +198,14 @@ public:
         return &accessor;
     }
 
+//----------------------------  Visitor Interface  -----------------------------
+public:
+    // Call visitor with a pointer to the value in storage.
+    void *accept(Storage const &storage, Visitor &visitor) const override {
+        return visitor.visit(const_cast<T *>(storage.get<T const *>()),
+                             true, false);
+    }
+
 //--------------------------------  Allocation  --------------------------------
 public:
     // Allocate a copy of source within target.
@@ -207,7 +231,8 @@ public:
 //-------------------------------  Value Access  -------------------------------
 public:
     // Retrieve the value in storage, which must be of the accessed type.
-    QualifiedValue get(Storage const &storage, void *buffer) const override {
+    QualifiedValue get(Storage const &storage,
+                       Buffer<void> *buffer) const override {
         return { const_cast<T *>(storage.get<T const *>()), true };
     }
 };
@@ -226,6 +251,13 @@ public:
     static Accessor const *instance() {
         static ValueAccessor accessor;
         return &accessor;
+    }
+
+//----------------------------  Visitor Interface  -----------------------------
+public:
+    // Call visitor with a pointer to the value in storage.
+    void *accept(Storage const &storage, Visitor &visitor) const override {
+        return visitor.visit(nullptr, true, true);
     }
 
 //--------------------------------  Allocation  --------------------------------
@@ -249,7 +281,8 @@ public:
 //-------------------------------  Value Access  -------------------------------
 public:
     // Retrieve the value in storage, which must be of the accessed type.
-    QualifiedValue get(Storage const &storage, void *buffer) const override {
+    QualifiedValue get(Storage const &storage,
+                       Buffer<void> *buffer) const override {
         return { nullptr, true };
     }
 };

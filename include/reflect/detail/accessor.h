@@ -9,6 +9,7 @@
 namespace Reflect { namespace Detail {
 
 // Uses.
+template <typename T> class Buffer;
 class Storage;
 class TypeInfo;
 
@@ -25,6 +26,17 @@ class Accessor {
 public:
     // Retrieve the type information of the accessed type.
     TypeInfo const *getTypeInfo() const { return _typeInfo; }
+
+//----------------------------  Visitor Interface  -----------------------------
+public:
+    class Visitor {
+    public:
+        virtual void *visit(void *value, bool constant, bool temporary) = 0;
+    };
+
+    // Call visitor with a pointer to the value in storage, which must be of
+    // the accessed type.
+    virtual void *accept(Storage const &storage, Visitor &visitor) const = 0;
 
 //--------------------------------  Allocation  --------------------------------
 public:
@@ -63,10 +75,23 @@ public:
     };
 
     // Retrieve the value in storage, which must be of the accessed type.
-    // An optional buffer may be provided into which an instance of the type
-    // can be constructed using placement-new (if necessary).
+    // An optional buffer may be provided into which an instance of the
+    // accessed type can be constructed (if necessary).
     virtual QualifiedValue get(Storage const &storage,
-                               void *buffer = nullptr) const = 0;
+                               Buffer<void> *buffer = nullptr) const = 0;
+
+    // Retrieve the value in storage, which must be of the accessed type, as the
+    // type associated with typeInfo.
+    // An optional buffer may be provided into which an instance of the type
+    // associated with typeInfo can be constructed (if necessary).
+    // Throws an exception if the value cannot be retrieved as specified.
+    void *getAs(Storage const &storage,
+                TypeInfo const *typeInfo,
+                Buffer<void> *buffer = nullptr) const;
+
+    void const *getAsConst(Storage const &storage,
+                           TypeInfo const *typeInfo,
+                           Buffer<void> *buffer = nullptr) const;
 
     // Set the value in storage by copy-assigning the specified value.
     // Storage and value must both be of the accessed type.
@@ -75,6 +100,17 @@ public:
         return false;
     }
 
+    // Set the value in storage, which must be of the accessed type, by
+    // copy-assigning the specified value of the type associated with typeInfo.
+    // Throws an exception if the assignment cannot be made as specified.
+    void setAs(Storage &storage,
+               TypeInfo const *typeInfo,
+               void const *value) const;
+
+    void setAs(Storage &storage,
+               Accessor const *accessor,
+               Storage const &value) const;
+
     // Set the value in storage by move-assigning the specified value.
     // Storage and value must both be of the accessed type.
     // Defaults to copy-assignment if move-assignment is not possible.
@@ -82,6 +118,17 @@ public:
     virtual bool move(Storage &storage, void *value) const {
         return set(storage, value);
     }
+
+    // Set the value in storage, which must be of the accessed type, by
+    // move-assigning the specified value of the type associated with typeInfo.
+    // Throws an exception if the assignment cannot be made as specified.
+    void moveAs(Storage &storage,
+                TypeInfo const *typeInfo,
+                void *value) const;
+
+    void moveAs(Storage &storage,
+                Accessor const *accessor,
+                Storage &value) const;
 
 //----------------------------  Internal Interface  ----------------------------
 protected:

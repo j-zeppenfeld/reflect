@@ -1,6 +1,7 @@
 // Copyright (c) 2018 Johannes Zeppenfeld
 // SPDX-License-Identifier: MIT
 
+#include "detail/buffer.h"
 #include "detail/type_info.h"
 #include "detail/value_accessor.h"
 
@@ -182,32 +183,16 @@ template <
 T_Related Object<T>::get() const {
     using T_Value = typename std::decay<T_Related>::type;
 
-    // If the accessed type does not exactly match T_Value, it is not possible
-    // to create an appropriate buffer for the accessor's get method here.
-    // Without a buffer, the accessor must return a reference, which can most
-    // easily be retrieved using the get method returning a constant reference.
-    if(_accessor->getTypeInfo() != Detail::TypeInfo::instance<T_Value>()) {
-        return get<T_Value const &>();
-    }
-
     // Buffer into which the accessor can construct an instance of the returned
     // type. This is needed if the accessor can only return by value.
-    struct Buffer {
-        union { T_Value _value; };
-        bool _constructed;
-
-        Buffer() : _constructed(false) { }
-        ~Buffer() { if(_constructed) _value.~T_Value(); }
-    } buffer;
+    Detail::Buffer<T_Value> buffer;
 
     // Retrieve value from storage using the accessor.
-    auto value = _accessor->get(_storage, &buffer._value);
-    if(value._value == &buffer._value) {
-        buffer._constructed = true;
-        return std::move(buffer._value);
-    } else {
-        return *static_cast<T_Value const *>(value._value);
-    }
+    void const *value = _accessor->getAsConst(
+        _storage, Detail::TypeInfo::instance<T_Value>(), &buffer
+    );
+    if(buffer.isConstructed()) return std::move(buffer.getValue());
+    else                       return *static_cast<T_Value const *>(value);
 }
 
 // Retrieve the contained value by mutable reference.
@@ -225,21 +210,12 @@ template <
 T_Related Object<T>::get() {
     using T_Value = typename std::decay<T_Related>::type;
 
-    // TODO: Allow type conversion.
-    if(_accessor->getTypeInfo() != Detail::TypeInfo::instance<T_Value>()) {
-        throw std::runtime_error(
-            "Accessing object value as wrong type."
-        );
-    }
-
     // Retrieve value from storage using the accessor.
-    auto value = _accessor->get(_storage);
-    if(value._constant) {
-        throw std::runtime_error(
-            "Retrieving mutable reference to constant object value."
-        );
-    }
-    return *static_cast<T_Value *>(value._value);
+    return *static_cast<T_Value *>(
+        _accessor->getAs(
+            _storage, Detail::TypeInfo::instance<T_Value>()
+        )
+    );
 }
 
 // Retrieve the contained value by constant reference.
@@ -257,16 +233,12 @@ template <
 T_Related Object<T>::get() const {
     using T_Value = typename std::decay<T_Related>::type;
 
-    // TODO: Allow type conversion.
-    if(_accessor->getTypeInfo() != Detail::TypeInfo::instance<T_Value>()) {
-        throw std::runtime_error(
-            "Accessing object value as wrong type."
-        );
-    }
-
     // Retrieve value from storage using the accessor.
-    auto value = _accessor->get(_storage);
-    return *static_cast<T_Value const *>(value._value);
+    return *static_cast<T_Value const *>(
+        _accessor->getAsConst(
+            _storage, Detail::TypeInfo::instance<T_Value>()
+        )
+    );
 }
 
 // Set the contained value without changing its reflected type.
@@ -283,21 +255,14 @@ template <
 void Object<T>::set(T_Derived &&value) {
     using T_Value = typename std::decay<T_Derived>::type;
 
-    // TODO: Allow type conversion.
-    if(_accessor->getTypeInfo() != Detail::TypeInfo::instance<T_Value>()) {
-        throw std::runtime_error(
-            "Setting object value from incompatible type."
-        );
-    }
-
     // Assign value to storage using the accessor.
-    if(!(std::is_lvalue_reference<T_Derived>::value
-         ? _accessor->set(_storage, &value)
-         : _accessor->move(_storage, &value)
-        )
-    ) {
-        throw std::runtime_error(
-            "Setting constant object value."
+    if(std::is_lvalue_reference<T_Derived>::value) {
+        _accessor->setAs(
+            _storage, Detail::TypeInfo::instance<T_Value>(), &value
+        );
+    } else {
+        _accessor->moveAs(
+            _storage, Detail::TypeInfo::instance<T_Value>(), &value
         );
     }
 }
@@ -316,22 +281,8 @@ template <
     >...
 >
 void Object<T>::set(T_Reflected<T_Related> const &value) {
-    // TODO: Allow type conversion.
-    if(_accessor->getTypeInfo() != value._accessor->getTypeInfo()) {
-        throw std::runtime_error(
-            "Setting object value from incompatible type."
-        );
-    }
-
-    // Retrieve value from storage using the accessor.
-    auto accessed = value._accessor->get(value._storage);
-
-    // Assign value to storage using the accessor.
-    if(!_accessor->set(_storage, accessed._value)) {
-        throw std::runtime_error(
-            "Setting constant object value."
-        );
-    }
+    // Copy-assign value to storage using the accessor.
+    _accessor->setAs(_storage, value._accessor, value._storage);
 }
 
 // Set the contained value without changing its reflected type by move-
@@ -348,26 +299,8 @@ template <
     >...
 >
 void Object<T>::set(T_Reflected<T_Related> &&value) {
-    // TODO: Allow type conversion.
-    if(_accessor->getTypeInfo() != value._accessor->getTypeInfo()) {
-        throw std::runtime_error(
-            "Setting object value from incompatible type."
-        );
-    }
-
-    // Retrieve value from storage using the accessor.
-    auto accessed = value._accessor->get(value._storage);
-
-    // Assign value to storage using the accessor.
-    if(!(accessed._constant
-         ? _accessor->set(_storage, accessed._value)
-         : _accessor->move(_storage, accessed._value)
-        )
-    ) {
-        throw std::runtime_error(
-            "Setting constant object value."
-        );
-    }
+    // Move-assign value to storage using the accessor.
+    _accessor->moveAs(_storage, value._accessor, value._storage);
 }
 
 }

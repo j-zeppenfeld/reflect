@@ -6,6 +6,37 @@
 
 #include "reflect/object.h"
 
+//------------------------------------------------------------------------------
+//--                               Registration                               --
+//------------------------------------------------------------------------------
+
+namespace {
+    struct Registration {
+        Registration() {
+            // Register Base as a base class of Derived.
+            const_cast<Reflect::Detail::TypeInfo *>(
+                Reflect::Detail::TypeInfo::instance<Derived>()
+            )->registerBase(
+                Reflect::Detail::Base(
+                    Reflect::Detail::TypeInfo::instance<Base>(),
+                    &upcast<Derived, Base>
+                )
+            );
+        }
+
+        template <typename T_Derived, typename T_Base>
+        static void const *upcast(void const *value) {
+            return static_cast<T_Base const *>(
+                static_cast<T_Derived const *>(value)
+            );
+        }
+    } registration;
+}
+
+//------------------------------------------------------------------------------
+//--                                Test Cases                                --
+//------------------------------------------------------------------------------
+
 TEST_CASE("Construct object by constructing its value in place",
           "[object][construct][by-value]") {
     Count<All>::clear();
@@ -68,7 +99,7 @@ TEST_CASE("Construct object by copying a value",
         Reflect::Object<Base> obj = derived;
         REQUIRE(Count<Derived>::copyConstructed() == 1);
         REQUIRE(Count<Base>::copyConstructed() == 1);
-//        REQUIRE(obj.get().getFrom() == &derived);
+        REQUIRE(obj.get().getFrom() == &derived);
 //        REQUIRE(obj.getType() == Reflect::getType<Derived>());
     }
 
@@ -92,7 +123,7 @@ TEST_CASE("Construct object by moving a value",
         Reflect::Object<Base> obj = std::move(derived);
         REQUIRE(Count<Derived>::moveConstructed() == 1);
         REQUIRE(Count<Base>::moveConstructed() == 1);
-//        REQUIRE(obj.get().getFrom() == &derived);
+        REQUIRE(obj.get().getFrom() == &derived);
 //        REQUIRE(obj.getType() == Reflect::getType<Derived>());
     }
 
@@ -134,19 +165,19 @@ TEST_CASE("Construct object by copying another object",
         Reflect::Object<Base> obj = objUpcast;
         REQUIRE(Count<Derived>::copyConstructed() == 1);
         REQUIRE(Count<Base>::copyConstructed() == 1);
-//        REQUIRE(obj.get().getFrom() == &objDerived.get());
+        REQUIRE(obj.get().getFrom() == &objUpcast.get());
 //        REQUIRE(obj.getType() == Reflect::getType<Derived>());
 
         Reflect::Object<Base> ref = refUpcast;
         REQUIRE(Count<Derived>::copyConstructed() == 1);
         REQUIRE(Count<Base>::copyConstructed() == 1);
-//        REQUIRE(ref.get().getFrom() == &derived);
+        REQUIRE(ref.get().getFrom() == &derived);
 //        REQUIRE(ref.getType() == Reflect::getType<Derived>());
 
         Reflect::Object<Base> cref = crefUpcast;
         REQUIRE(Count<Derived>::copyConstructed() == 1);
         REQUIRE(Count<Base>::copyConstructed() == 1);
-//        REQUIRE(cref.get().getFrom() == &derived);
+        REQUIRE(cref.get().getFrom() == &derived);
 //        REQUIRE(cref.getType() == Reflect::getType<Derived>());
     }
 
@@ -160,19 +191,19 @@ TEST_CASE("Construct object by copying another object",
         Reflect::Object<Base> obj = objDerived;
         REQUIRE(Count<Derived>::copyConstructed() == 1);
         REQUIRE(Count<Base>::copyConstructed() == 1);
-//        REQUIRE(obj.get().getFrom() == &objDerived.get());
+        REQUIRE(obj.get().getFrom() == &objDerived.get());
 //        REQUIRE(obj.getType() == Reflect::getType<Derived>());
 
         Reflect::Object<Base> ref = refDerived;
         REQUIRE(Count<Derived>::copyConstructed() == 1);
         REQUIRE(Count<Base>::copyConstructed() == 1);
-//        REQUIRE(ref.get().getFrom() == &derived);
+        REQUIRE(ref.get().getFrom() == &derived);
 //        REQUIRE(ref.getType() == Reflect::getType<Derived>());
 
         Reflect::Object<Base> cref = crefDerived;
         REQUIRE(Count<Derived>::copyConstructed() == 1);
         REQUIRE(Count<Base>::copyConstructed() == 1);
-//        REQUIRE(cref.get().getFrom() == &derived);
+        REQUIRE(cref.get().getFrom() == &derived);
 //        REQUIRE(cref.getType() == Reflect::getType<Derived>());
     }
 
@@ -214,19 +245,19 @@ TEST_CASE("Construct object by moving another object",
         Reflect::Object<Base> obj = std::move(objUpcast);
         REQUIRE(Count<Derived>::moveConstructed() == 1);
         REQUIRE(Count<Base>::moveConstructed() == 1);
-//        REQUIRE(obj.get().getFrom() == &objDerived.get());
+        REQUIRE(obj.get().getFrom() == &objUpcast.get());
 //        REQUIRE(obj.getType() == Reflect::getType<Derived>());
 
         Reflect::Object<Base> ref = std::move(refUpcast);
         REQUIRE(Count<Derived>::moveConstructed() == 1);
         REQUIRE(Count<Base>::moveConstructed() == 1);
-//        REQUIRE(ref.get().getFrom() == &derived);
+        REQUIRE(ref.get().getFrom() == &derived);
 //        REQUIRE(ref.getType() == Reflect::getType<Derived>());
 
         Reflect::Object<Base> cref = std::move(crefUpcast);
         REQUIRE(Count<Derived>::copyConstructed() == 1);
         REQUIRE(Count<Base>::copyConstructed() == 1);
-//        REQUIRE(cref.get().getFrom() == &derived);
+        REQUIRE(cref.get().getFrom() == &derived);
 //        REQUIRE(cref.getType() == Reflect::getType<Derived>());
     }
 
@@ -240,19 +271,19 @@ TEST_CASE("Construct object by moving another object",
         Reflect::Object<Base> obj = std::move(objDerived);
         REQUIRE(Count<Derived>::moveConstructed() == 1);
         REQUIRE(Count<Base>::moveConstructed() == 1);
-//        REQUIRE(obj.get().getFrom() == &objDerived.get());
+        REQUIRE(obj.get().getFrom() == &objDerived.get());
 //        REQUIRE(obj.getType() == Reflect::getType<Derived>());
 
         Reflect::Object<Base> ref = std::move(refDerived);
         REQUIRE(Count<Derived>::moveConstructed() == 1);
         REQUIRE(Count<Base>::moveConstructed() == 1);
-//        REQUIRE(ref.get().getFrom() == &derived);
+        REQUIRE(ref.get().getFrom() == &derived);
 //        REQUIRE(ref.getType() == Reflect::getType<Derived>());
 
         Reflect::Object<Base> cref = std::move(crefDerived);
         REQUIRE(Count<Derived>::copyConstructed() == 1);
         REQUIRE(Count<Base>::copyConstructed() == 1);
-//        REQUIRE(cref.get().getFrom() == &derived);
+        REQUIRE(cref.get().getFrom() == &derived);
 //        REQUIRE(cref.getType() == Reflect::getType<Derived>());
     }
 
@@ -275,7 +306,7 @@ TEST_CASE("Construct object by referencing a value",
     SECTION("of derived type.") {
         Reflect::Object<Base> obj = std::ref(derived);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&obj.get() == &derived);
+        REQUIRE(&obj.get() == &derived);
 //        REQUIRE(obj.getType() == Reflect::getType<Derived &>());
     }
 
@@ -289,7 +320,7 @@ TEST_CASE("Construct object by referencing a value",
     SECTION("of derived constant type.") {
         Reflect::Object<Base> obj = std::cref(derived);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&obj.get<Base const &>() == &derived);
+        REQUIRE(&obj.get<Base const &>() == &derived);
 //        REQUIRE(obj.getType() == Reflect::getType<Derived const &>());
     }
 
@@ -330,17 +361,17 @@ TEST_CASE("Construct object by referencing another object",
 
         Reflect::Object<Base> obj = std::ref(objUpcast);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&obj.get() == &objDerived.get());
+        REQUIRE(&obj.get() == &objUpcast.get());
 //        REQUIRE(obj.getType() == Reflect::getType<Derived &>());
 
         Reflect::Object<Base> ref = std::ref(refUpcast);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&ref.get() == &derived);
+        REQUIRE(&ref.get() == &derived);
 //        REQUIRE(ref.getType() == Reflect::getType<Derived &>());
 
         Reflect::Object<Base> cref = std::ref(crefUpcast);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&cref.get<Base const &>() == &derived);
+        REQUIRE(&cref.get<Base const &>() == &derived);
 //        REQUIRE(cref.getType() == Reflect::getType<Derived const &>());
     }
 
@@ -353,17 +384,17 @@ TEST_CASE("Construct object by referencing another object",
 
         Reflect::Object<Base> obj = std::ref(objDerived);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&obj.get() == &objDerived.get());
+        REQUIRE(&obj.get() == &objDerived.get());
 //        REQUIRE(obj.getType() == Reflect::getType<Derived &>());
 
         Reflect::Object<Base> ref = std::ref(refDerived);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&ref.get() == &derived);
+        REQUIRE(&ref.get() == &derived);
 //        REQUIRE(ref.getType() == Reflect::getType<Derived &>());
 
         Reflect::Object<Base> cref = std::ref(crefDerived);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&cref.get<Base const &>() == &derived);
+        REQUIRE(&cref.get<Base const &>() == &derived);
 //        REQUIRE(cref.getType() == Reflect::getType<Derived const &>());
     }
 
@@ -399,17 +430,17 @@ TEST_CASE("Construct object by referencing another object",
 
         Reflect::Object<Base> obj = std::ref(objUpcast);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&obj.get<Base const &>() == &objDerived.get());
+        REQUIRE(&obj.get<Base const &>() == &objUpcast.get());
 //        REQUIRE(obj.getType() == Reflect::getType<Derived const &>());
 
         Reflect::Object<Base> ref = std::ref(refUpcast);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&ref.get<Base const &>() == &derived);
+        REQUIRE(&ref.get<Base const &>() == &derived);
 //        REQUIRE(ref.getType() == Reflect::getType<Derived const &>());
 
         Reflect::Object<Base> cref = std::ref(crefUpcast);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&cref.get<Base const &>() == &derived);
+        REQUIRE(&cref.get<Base const &>() == &derived);
 //        REQUIRE(cref.getType() == Reflect::getType<Derived const &>());
     }
 
@@ -422,17 +453,17 @@ TEST_CASE("Construct object by referencing another object",
 
         Reflect::Object<Base> obj = std::ref(objDerived);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&obj.get<Base const &>() == &objDerived.get());
+        REQUIRE(&obj.get<Base const &>() == &objDerived.get());
 //        REQUIRE(obj.getType() == Reflect::getType<Derived const &>());
 
         Reflect::Object<Base> ref = std::ref(refDerived);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&ref.get<Base const &>() == &derived);
+        REQUIRE(&ref.get<Base const &>() == &derived);
 //        REQUIRE(ref.getType() == Reflect::getType<Derived const &>());
 
         Reflect::Object<Base> cref = std::ref(crefDerived);
         REQUIRE(Count<All>::constructed() == 0);
-//        REQUIRE(&cref.get<Base const &>() == &derived);
+        REQUIRE(&cref.get<Base const &>() == &derived);
 //        REQUIRE(cref.getType() == Reflect::getType<Derived const &>());
     }
 
