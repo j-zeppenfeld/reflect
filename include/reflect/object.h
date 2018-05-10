@@ -1,5 +1,5 @@
 // Copyright (c) 2018 Johannes Zeppenfeld
-// Distributed under the MIT license, see LICENSE file in repository root.
+// SPDX-License-Identifier: MIT
 
 #ifndef REFLECT_OBJECT_H
 #define REFLECT_OBJECT_H
