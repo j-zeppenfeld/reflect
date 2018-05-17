@@ -118,6 +118,13 @@ public:
         return ValueAccessor<T>::instance();
     }
 
+    // Allocate a moved copy of source within target.
+    Accessor const *allocateMove(Storage &source,
+                                 Storage &target) const override {
+        target.construct<T>(std::move(*source.get<T *>()));
+        return ValueAccessor<T>::instance();
+    }
+
     // Allocate a reference to source within target.
     Accessor const *allocateReference(Storage const &source,
                                       Storage &target,
