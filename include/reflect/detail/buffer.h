@@ -31,6 +31,18 @@ public:
         return value;
     }
 
+    // Construct the instance of the buffer by copying value.
+    // Requires that the buffer has not already been constructed, and that value
+    // is of the same type as the buffer.
+    virtual void *constructCopy(void const *value) = 0;
+
+    // Construct the instance of the buffer by moving value.
+    // Requires that the buffer has not already been constructed, and that value
+    // is of the same type as the buffer.
+    virtual void *constructMove(void *value) {
+        return constructCopy(value);
+    }
+
     // Returns true if the buffer has been constructed.
     bool isConstructed() const { return _constructed; }
 
@@ -39,7 +51,7 @@ protected:
     : _buffer(buffer)
     , _constructed(false) { }
 
-    ~Buffer() = default;
+    virtual ~Buffer() = default;
 
 private:
     void *_buffer;
@@ -57,6 +69,16 @@ public:
     template <typename ...T_Args>
     T *construct(T_Args &&...args) {
         return Buffer<void>::construct<T>(std::forward<T_Args>(args)...);
+    }
+
+    // Construct the instance of the buffer by copying value.
+    void *constructCopy(void const *value) override {
+        return construct(*static_cast<T const *>(value));
+    }
+
+    // Construct the instance of the buffer by moving value.
+    void *constructMove(void *value) override {
+        return construct(std::move(*static_cast<T *>(value)));
     }
 
     // Retrieve the buffer's constructed value.

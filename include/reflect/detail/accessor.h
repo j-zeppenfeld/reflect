@@ -66,20 +66,6 @@ public:
 
 //-------------------------------  Value Access  -------------------------------
 public:
-    struct QualifiedValue {
-        void *_value;
-        bool _constant;
-
-        QualifiedValue(void *value, bool constant)
-        : _value(value), _constant(constant) { }
-    };
-
-    // Retrieve the value in storage, which must be of the accessed type.
-    // An optional buffer may be provided into which an instance of the
-    // accessed type can be constructed (if necessary).
-    virtual QualifiedValue get(Storage const &storage,
-                               Buffer<void> *buffer = nullptr) const = 0;
-
     // Retrieve the value in storage, which must be of the accessed type, as the
     // type associated with typeInfo.
     // An optional buffer may be provided into which an instance of the type

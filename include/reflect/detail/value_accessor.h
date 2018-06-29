@@ -79,12 +79,6 @@ public:
 
 //-------------------------------  Value Access  -------------------------------
 public:
-    // Retrieve the value in storage, which must be of the accessed type.
-    QualifiedValue get(Storage const &storage,
-                       Buffer<void> *buffer) const override {
-        return { &storage.get<T>(), false };
-    }
-
     // Set the value in storage by copy-assigning the specified value.
     bool set(Storage &storage, void const *value) const override {
         storage.get<T>() = *static_cast<T const *>(value);
@@ -160,12 +154,6 @@ public:
 
 //-------------------------------  Value Access  -------------------------------
 public:
-    // Retrieve the value in storage, which must be of the accessed type.
-    QualifiedValue get(Storage const &storage,
-                       Buffer<void> *buffer) const override {
-        return { storage.get<T *>(), false };
-    }
-
     // Set the value in storage by copy-assigning the specified value.
     bool set(Storage &storage, void const *value) const override {
         *storage.get<T *>() = *static_cast<T const *>(value);
@@ -227,14 +215,6 @@ public:
     void deallocate(Storage &storage) const override {
         storage.destruct<T const *>();
     }
-
-//-------------------------------  Value Access  -------------------------------
-public:
-    // Retrieve the value in storage, which must be of the accessed type.
-    QualifiedValue get(Storage const &storage,
-                       Buffer<void> *buffer) const override {
-        return { const_cast<T *>(storage.get<T const *>()), true };
-    }
 };
 
 //------------------------------------------------------------------------------
@@ -277,14 +257,6 @@ public:
 
     // Deallocate the value in storage.
     void deallocate(Storage &storage) const override { }
-
-//-------------------------------  Value Access  -------------------------------
-public:
-    // Retrieve the value in storage, which must be of the accessed type.
-    QualifiedValue get(Storage const &storage,
-                       Buffer<void> *buffer) const override {
-        return { nullptr, true };
-    }
 };
 
 } }

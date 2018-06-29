@@ -4,6 +4,7 @@
 #include "reflect/detail/accessor.h"
 
 #include "reflect/detail/base.h"
+#include "reflect/detail/buffer.h"
 #include "reflect/detail/conversion.h"
 #include "reflect/detail/type_info.h"
 
@@ -28,7 +29,22 @@ namespace {
 
         // Convert value from typeInfo to _targetTypeInfo.
         // If referable is true, a direct reference to value may be returned.
-        void *convert(TypeInfo const *typeInfo, void *value, bool referable) {
+        // If movable is true, value references a temporary that may be moved.
+        void *convert(TypeInfo const *typeInfo, void *value,
+                      bool referable, bool movable) {
+            // No conversion is necessary if typeInfo matches the target type.
+            if(typeInfo == _targetTypeInfo) {
+                // Return a reference to value if possible.
+                if(referable) {
+                    return value;
+                // Otherwise, try to move or copy value into the target buffer.
+                } else if(_buffer) {
+                    void *copy = movable ? _buffer->constructMove(value)
+                                         : _buffer->constructCopy(value);
+                    if(copy) return copy;
+                }
+            }
+
             // If a target buffer is available, look for a registered conversion
             // from typeInfo to the target type.
             if(_buffer) {
@@ -41,13 +57,10 @@ namespace {
 
             // Recursively check base classes.
             for(auto &&base : typeInfo->getBases()) {
-                void *upcast = base.upcast(value);
-                if(base.getTypeInfo() == _targetTypeInfo && referable) {
-                    return upcast;
-                }
                 void *converted = convert(base.getTypeInfo(),
-                                          upcast,
-                                          referable);
+                                          base.upcast(value),
+                                          referable,
+                                          movable);
                 if(converted) return converted;
             }
 
@@ -122,36 +135,25 @@ namespace {
 void *Accessor::getAs(Storage const &storage,
                       TypeInfo const *typeInfo,
                       Buffer<void> *buffer) const {
-    void *result;
-    if(typeInfo == _typeInfo) {
-        // Retrieve value directly from storage.
-        auto value = get(storage, buffer);
-        if(value._constant) {
-            result = nullptr;
-        } else {
-            result = value._value;
+    // Create visitor to retrieve and convert value from storage.
+    class Visitor : public ConversionVisitor {
+    public:
+        Visitor(TypeInfo const *sourceTypeInfo,
+                TypeInfo const *targetTypeInfo,
+                Buffer<void> *buffer)
+        : ConversionVisitor(targetTypeInfo, buffer)
+        , _sourceTypeInfo(sourceTypeInfo) { }
+
+        void *visit(void *value, bool constant, bool temporary) override {
+            return convert(_sourceTypeInfo, value,
+                           !constant && !temporary, !constant && temporary);
         }
-    } else {
-        // Create visitor to retrieve and convert value from storage.
-        class Visitor : public ConversionVisitor {
-        public:
-            Visitor(TypeInfo const *sourceTypeInfo,
-                    TypeInfo const *targetTypeInfo,
-                    Buffer<void> *buffer)
-            : ConversionVisitor(targetTypeInfo, buffer)
-            , _sourceTypeInfo(sourceTypeInfo) { }
 
-            void *visit(void *value, bool constant, bool temporary) override {
-                return convert(_sourceTypeInfo, value, !constant && !temporary);
-            }
+    private:
+        TypeInfo const *_sourceTypeInfo;
+    } visitor(_typeInfo, typeInfo, buffer);
 
-        private:
-            TypeInfo const *_sourceTypeInfo;
-        } visitor(_typeInfo, typeInfo, buffer);
-
-        result = accept(storage, visitor);
-    }
-
+    void *result = accept(storage, visitor);
     if(!result) {
         throw std::runtime_error(
             "Accessing value as incompatible type."
@@ -164,31 +166,25 @@ void *Accessor::getAs(Storage const &storage,
 void const *Accessor::getAsConst(Storage const &storage,
                                  TypeInfo const *typeInfo,
                                  Buffer<void> *buffer) const {
-    void const *result;
-    if(typeInfo == _typeInfo) {
-        // Retrieve value directly from storage.
-        result = get(storage, buffer)._value;
-    } else {
-        // Create visitor to retrieve and convert value from storage.
-        class Visitor : public ConversionVisitor {
-        public:
-            Visitor(TypeInfo const *sourceTypeInfo,
-                    TypeInfo const *targetTypeInfo,
-                    Buffer<void> *buffer)
-            : ConversionVisitor(targetTypeInfo, buffer)
-            , _sourceTypeInfo(sourceTypeInfo) { }
+    // Create visitor to retrieve and convert value from storage.
+    class Visitor : public ConversionVisitor {
+    public:
+        Visitor(TypeInfo const *sourceTypeInfo,
+                TypeInfo const *targetTypeInfo,
+                Buffer<void> *buffer)
+        : ConversionVisitor(targetTypeInfo, buffer)
+        , _sourceTypeInfo(sourceTypeInfo) { }
 
-            void *visit(void *value, bool constant, bool temporary) override {
-                return convert(_sourceTypeInfo, value, !temporary);
-            }
+        void *visit(void *value, bool constant, bool temporary) override {
+            return convert(_sourceTypeInfo, value,
+                           !temporary, !constant && temporary);
+        }
 
-        private:
-            TypeInfo const *_sourceTypeInfo;
-        } visitor(_typeInfo, typeInfo, buffer);
+    private:
+        TypeInfo const *_sourceTypeInfo;
+    } visitor(_typeInfo, typeInfo, buffer);
 
-        result = accept(storage, visitor);
-    }
-
+    void const *result = accept(storage, visitor);
     if(!result) {
         throw std::runtime_error(
             "Accessing value as incompatible type."
