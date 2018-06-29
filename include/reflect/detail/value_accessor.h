@@ -43,37 +43,46 @@ public:
         return visitor.visit(&storage.get<T>(), false, false);
     }
 
-//--------------------------------  Allocation  --------------------------------
+//-------------------------------  Construction  -------------------------------
 public:
-    // Allocate a copy of source within target.
-    Accessor const *allocateCopy(Storage const &source,
-                                 Storage &target) const override {
-        target.construct<T>(source.get<T>());
+    // Construct an instance of the accessed type within storage, forwarding
+    // the provided arguments to the constructor.
+    // Returns an accessor for the constructed value in storage.
+    template <typename ...T_Args>
+    static Accessor const *construct(Storage &storage, T_Args &&...args) {
+        storage.construct<T>(std::forward<T_Args>(args)...);
+        return instance();
+    }
+
+    // Construct a copy of value within storage.
+    Accessor const *constructCopy(Storage &storage,
+                                  Storage const &value) const override {
+        storage.construct<T>(const_cast<T const &>(value.get<T>()));
         return this;
     }
 
-    // Allocate a moved copy of source within target.
-    Accessor const *allocateMove(Storage &source,
-                                 Storage &target) const override {
-        target.construct<T>(std::move(source.get<T>()));
+    // Construct a moved copy of value within storage.
+    Accessor const *constructMove(Storage &storage,
+                                  Storage &value) const override {
+        storage.construct<T>(std::move(value.get<T>()));
         return this;
     }
 
-    // Allocate a reference to source within target.
-    Accessor const *allocateReference(Storage const &source,
-                                      Storage &target,
-                                      bool constant) const override {
+    // Construct a reference to value within storage.
+    Accessor const *constructReference(Storage &storage,
+                                       Storage const &value,
+                                       bool constant) const override {
         if(constant) {
-            target.construct<T const *>(&source.get<T>());
-            return ValueAccessor<T const &>::instance();
+            return ValueAccessor<T const &>::construct(
+                storage, const_cast<T const &>(value.get<T>())
+            );
         } else {
-            target.construct<T *>(&source.get<T>());
-            return ValueAccessor<T &>::instance();
+            return ValueAccessor<T &>::construct(storage, value.get<T>());
         }
     }
 
-    // Deallocate the value in storage.
-    void deallocate(Storage &storage) const override {
+    // Destruct the value in storage.
+    void destruct(Storage &storage) const override {
         storage.destruct<T>();
     }
 
@@ -118,37 +127,46 @@ public:
         return visitor.visit(storage.get<T *>(), false, false);
     }
 
-//--------------------------------  Allocation  --------------------------------
+//-------------------------------  Construction  -------------------------------
 public:
-    // Allocate a copy of source within target.
-    Accessor const *allocateCopy(Storage const &source,
-                                 Storage &target) const override {
-        target.construct<T>(*source.get<T *>());
-        return ValueAccessor<T>::instance();
+    // Construct a mutable reference to value within storage.
+    // Returns an accessor for the constructed value in storage.
+    static Accessor const *construct(Storage &storage, T &value) {
+        storage.construct<T *>(&value);
+        return instance();
     }
 
-    // Allocate a moved copy of source within target.
-    Accessor const *allocateMove(Storage &source,
-                                 Storage &target) const override {
-        target.construct<T>(std::move(*source.get<T *>()));
-        return ValueAccessor<T>::instance();
+    // Construct a copy of value within storage.
+    Accessor const *constructCopy(Storage &storage,
+                                  Storage const &value) const override {
+        return ValueAccessor<T>::construct(
+            storage, const_cast<T const &>(*value.get<T *>())
+        );
     }
 
-    // Allocate a reference to source within target.
-    Accessor const *allocateReference(Storage const &source,
-                                      Storage &target,
-                                      bool constant) const override {
+    // Construct a moved copy of value within storage.
+    Accessor const *constructMove(Storage &storage,
+                                  Storage &value) const override {
+        return ValueAccessor<T>::construct(
+            storage, std::move(*value.get<T *>())
+        );
+    }
+
+    // Construct a reference to value within storage.
+    Accessor const *constructReference(Storage &storage,
+                                       Storage const &value,
+                                       bool constant) const override {
         if(constant) {
-            target.construct<T const *>(source.get<T *>());
-            return ValueAccessor<T const &>::instance();
+            return ValueAccessor<T const &>::construct(
+                storage, const_cast<T const &>(*value.get<T *>())
+            );
         } else {
-            target.construct<T *>(source.get<T *>());
-            return this;
+            return construct(storage, *value.get<T *>());
         }
     }
 
-    // Deallocate the value in storage.
-    void deallocate(Storage &storage) const override {
+    // Destruct the value in storage.
+    void destruct(Storage &storage) const override {
         storage.destruct<T *>();
     }
 
@@ -194,25 +212,30 @@ public:
                              true, false);
     }
 
-//--------------------------------  Allocation  --------------------------------
+//-------------------------------  Construction  -------------------------------
 public:
-    // Allocate a copy of source within target.
-    Accessor const *allocateCopy(Storage const &source,
-                                 Storage &target) const override {
-        target.construct<T>(*source.get<T const *>());
-        return ValueAccessor<T>::instance();
+    // Construct a constant reference to value within storage.
+    // Returns an accessor for the constructed value in storage.
+    static Accessor const *construct(Storage &storage, T const &value) {
+        storage.construct<T const *>(&value);
+        return instance();
     }
 
-    // Allocate a reference to source within target.
-    Accessor const *allocateReference(Storage const &source,
-                                      Storage &target,
-                                      bool constant) const override {
-        target.construct<T const *>(source.get<T const *>());
-        return this;
+    // Construct a copy of value within storage.
+    Accessor const *constructCopy(Storage &storage,
+                                  Storage const &value) const override {
+        return ValueAccessor<T>::construct(storage, *value.get<T const *>());
     }
 
-    // Deallocate the value in storage.
-    void deallocate(Storage &storage) const override {
+    // Construct a reference to value within storage.
+    Accessor const *constructReference(Storage &storage,
+                                       Storage const &value,
+                                       bool constant) const override {
+        return construct(storage, *value.get<T const *>());
+    }
+
+    // Destruct the value in storage.
+    void destruct(Storage &storage) const override {
         storage.destruct<T const *>();
     }
 };
@@ -240,23 +263,23 @@ public:
         return visitor.visit(nullptr, true, true);
     }
 
-//--------------------------------  Allocation  --------------------------------
+//-------------------------------  Construction  -------------------------------
 public:
     // Allocate a copy of source within target.
-    Accessor const *allocateCopy(Storage const &source,
-                                 Storage &target) const override {
+    Accessor const *constructCopy(Storage &storage,
+                                  Storage const &value) const override {
         return this;
     }
 
-    // Allocate a reference to source within target.
-    Accessor const *allocateReference(Storage const &source,
-                                      Storage &target,
-                                      bool constant) const override {
+    // Construct a reference to value within storage.
+    Accessor const *constructReference(Storage &storage,
+                                       Storage const &value,
+                                       bool constant) const override {
         return this;
     }
 
-    // Deallocate the value in storage.
-    void deallocate(Storage &storage) const override { }
+    // Destruct the value in storage.
+    void destruct(Storage &storage) const override { }
 };
 
 } }

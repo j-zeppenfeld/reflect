@@ -38,31 +38,31 @@ public:
     // the accessed type.
     virtual void *accept(Storage const &storage, Visitor &visitor) const = 0;
 
-//--------------------------------  Allocation  --------------------------------
+//-------------------------------  Construction  -------------------------------
 public:
-    // Allocate a copy of source within target.
-    // Source and target must both be of the accessed type.
-    // Returns an accessor for the allocated value in target.
-    virtual Accessor const *allocateCopy(Storage const &source,
-                                         Storage &target) const = 0;
+    // Construct a copy of value within storage.
+    // Value must be of the accessed type, and storage must be unallocated.
+    // Returns an accessor for the constructed value in storage.
+    virtual Accessor const *constructCopy(Storage &storage,
+                                          Storage const &value) const = 0;
 
-    // Allocate a moved copy of source within target.
-    // Source and target must both be of the accessed type.
-    // Returns an accessor for the allocated value in target.
-    virtual Accessor const *allocateMove(Storage &source,
-                                         Storage &target) const {
-        return allocateCopy(source, target);
+    // Construct a moved copy of value within storage.
+    // Value must be of the accessed type, and storage must be unallocated.
+    // Returns an accessor for the constructed value in storage.
+    virtual Accessor const *constructMove(Storage &storage,
+                                          Storage &value) const {
+        return constructCopy(storage, value);
     }
 
-    // Allocate a reference to source within target.
-    // Source and target must both be of the accessed type.
-    // Returns an accessor for the allocated value in target.
-    virtual Accessor const *allocateReference(Storage const &source,
-                                              Storage &target,
-                                              bool constant) const = 0;
+    // Construct a reference to value within storage.
+    // Value must be of the accessed type, and storage must be unallocated.
+    // Returns an accessor for the constructed value in storage.
+    virtual Accessor const *constructReference(Storage &storage,
+                                               Storage const &value,
+                                               bool constant) const = 0;
 
-    // Deallocate the value in storage, which must be of the accessed type.
-    virtual void deallocate(Storage &storage) const = 0;
+    // Destruct the value in storage, which must be of the accessed type.
+    virtual void destruct(Storage &storage) const = 0;
 
 //-------------------------------  Value Access  -------------------------------
 public:
