@@ -31,13 +31,7 @@ public:
     // Retrieve the global type information instance of type T.
     template <typename T>
     static TypeInfo const *instance() {
-        static_assert(
-            std::is_same<T, typename std::decay<T>::type>::value,
-            "Internal error: Type information instance must be decayed."
-        );
-
-        static TypeInfo typeInfo;
-        return &typeInfo;
+        return mutableInstance<T>();
     }
 
 //-----------------------------  Public Interface  -----------------------------
@@ -66,13 +60,20 @@ public:
         return _conversions.end();
     }
 
-//----------------------------  Private Interface  -----------------------------
-private:
-    // Allow creation of type information only through TypeInfo::instance.
-    TypeInfo() { }
-    TypeInfo(TypeInfo const &) = delete;
-
+//-------------------------------  Registration  -------------------------------
 public:
+    // Retrieve the global type information instance of type T.
+    template <typename T>
+    static TypeInfo *mutableInstance() {
+        static_assert(
+            std::is_same<T, typename std::decay<T>::type>::value,
+            "Internal error: Type information instance must be decayed."
+        );
+
+        static TypeInfo typeInfo;
+        return &typeInfo;
+    }
+
     // Register a base class for the type.
     void registerBase(Base base) {
         _bases.push_back(std::move(base));
@@ -82,6 +83,12 @@ public:
     void registerConversion(Conversion conversion) {
         _conversions.push_back(std::move(conversion));
     }
+
+//----------------------------  Private Interface  -----------------------------
+private:
+    // Allow creation of type information only through TypeInfo::instance.
+    TypeInfo() { }
+    TypeInfo(TypeInfo const &) = delete;
 
 //---------------------------------  Members  ----------------------------------
 private:

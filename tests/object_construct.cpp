@@ -5,6 +5,7 @@
 #include "common/classes.h"
 
 #include "reflect/object.h"
+#include "reflect/register.h"
 
 //------------------------------------------------------------------------------
 //--                               Registration                               --
@@ -13,22 +14,9 @@
 namespace {
     struct Registration {
         Registration() {
-            // Register Base as a base class of Derived.
-            const_cast<Reflect::Detail::TypeInfo *>(
-                Reflect::Detail::TypeInfo::instance<Derived>()
-            )->registerBase(
-                Reflect::Detail::Base(
-                    Reflect::Detail::TypeInfo::instance<Base>(),
-                    &upcast<Derived, Base>
-                )
-            );
-        }
-
-        template <typename T_Derived, typename T_Base>
-        static void const *upcast(void const *value) {
-            return static_cast<T_Base const *>(
-                static_cast<T_Derived const *>(value)
-            );
+            Reflect::Register<Derived>()
+                .base<Base>()
+            ;
         }
     } registration;
 }
