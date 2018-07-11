@@ -15,9 +15,8 @@
 namespace Reflect {
 
 // Uses.
-template <typename T> class Reference;
-template <typename T> class Value;
 namespace Detail { class Accessor; }
+class Type;
 
 //------------------------------------------------------------------------------
 //--                               Class Object                               --
@@ -222,6 +221,22 @@ public:
         >...
     >
     void set(T_Reflected<T_Related> &&value);
+
+//-----------------------------  Type Reflection  ------------------------------
+public:
+    // Retrieve the qualified reflected type of the contained value.
+    Type getType() const;
+
+    // Retrieve the unqualified reflected type of the contained value.
+    Type getUnqualifiedType() const;
+
+    // Returns true if the contained value is constant, meaning it cannot be set
+    // nor be retrieved by mutable reference.
+    bool isConstant() const;
+
+    // Returns true if the object contains a reference to a value not owned by
+    // the object.
+    bool isReference() const;
 
 //-----------------------------  Private Members  ------------------------------
 private:

@@ -28,7 +28,7 @@ class ValueAccessor : public Accessor {
 
 public:
     // Default constructible.
-    ValueAccessor() : Accessor(TypeInfo::instance<T>()) { }
+    ValueAccessor() : Accessor(TypeInfo::instance<T>(), false, false) { }
 
     // Retrieve the global instance of this accessor.
     static Accessor const *instance() {
@@ -112,7 +112,7 @@ class ValueAccessor<T &> : public Accessor {
 
 public:
     // Default constructible.
-    ValueAccessor() : Accessor(TypeInfo::instance<T>()) { }
+    ValueAccessor() : Accessor(TypeInfo::instance<T>(), false, true) { }
 
     // Retrieve the global instance of this accessor.
     static Accessor const *instance() {
@@ -196,7 +196,7 @@ class ValueAccessor<T const &> : public Accessor {
 
 public:
     // Default constructible.
-    ValueAccessor() : Accessor(TypeInfo::instance<T>()) { }
+    ValueAccessor() : Accessor(TypeInfo::instance<T>(), true, true) { }
 
     // Retrieve the global instance of this accessor.
     static Accessor const *instance() {
@@ -248,7 +248,7 @@ template <>
 class ValueAccessor<void> : public Accessor {
 public:
     // Default constructible.
-    ValueAccessor() : Accessor(TypeInfo::instance<void>()) { }
+    ValueAccessor() : Accessor(TypeInfo::instance<void>(), true, false) { }
 
     // Retrieve the global instance of this accessor.
     static Accessor const *instance() {

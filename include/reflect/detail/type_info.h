@@ -15,6 +15,7 @@
 #include "iterator_range.h"
 
 #include <string>
+#include <typeinfo>
 #include <type_traits>
 #include <vector>
 
@@ -36,6 +37,9 @@ public:
 
 //-----------------------------  Public Interface  -----------------------------
 public:
+    // Retrieve the shortest name by which the type has been registered.
+    std::string const &getName() const { return _name; }
+
     // Iterate over all registered base classes of the type.
     using BaseIterator = std::vector<Base>::const_iterator;
     IteratorRange<BaseIterator> getBases() const {
@@ -70,7 +74,7 @@ public:
             "Internal error: Type information instance must be decayed."
         );
 
-        static TypeInfo typeInfo;
+        static TypeInfo typeInfo(typeid(T));
         return &typeInfo;
     }
 
@@ -87,12 +91,14 @@ public:
 //----------------------------  Private Interface  -----------------------------
 private:
     // Allow creation of type information only through TypeInfo::instance.
-    TypeInfo() { }
     TypeInfo(TypeInfo const &) = delete;
+
+    TypeInfo(std::type_info const &typeInfo)
+    : _name(typeInfo.name()), _nameSet(false) { }
 
 //---------------------------------  Members  ----------------------------------
 private:
-    // Shortest name by which the type was registered.
+    // Shortest name by which the type has been registered.
     std::string _name;
     bool _nameSet;
     // List of base classes registered for the type.

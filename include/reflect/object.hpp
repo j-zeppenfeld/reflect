@@ -1,6 +1,8 @@
 // Copyright (c) 2018 Johannes Zeppenfeld
 // SPDX-License-Identifier: MIT
 
+#include "type.h"
+
 #include "detail/buffer.h"
 #include "detail/type_info.h"
 #include "detail/value_accessor.h"
@@ -304,6 +306,40 @@ template <
 void Object<T>::set(T_Reflected<T_Related> &&value) {
     // Move-assign value to storage using the accessor.
     _accessor->moveAs(_storage, value._accessor, value._storage);
+}
+
+//-----------------------------  Type Reflection  ------------------------------
+
+// Retrieve the qualified reflected type of the contained value.
+template <typename T>
+Type Object<T>::getType() const {
+    return {
+        _accessor->getTypeInfo(),
+        _accessor->isConstant(),
+        _accessor->isReference()
+    };
+}
+
+// Retrieve the unqualified reflected type of the contained value.
+template <typename T>
+Type Object<T>::getUnqualifiedType() const {
+    return {
+        _accessor->getTypeInfo(),
+        false,
+        false
+    };
+}
+
+// Returns true if the contained value is constant.
+template <typename T>
+bool Object<T>::isConstant() const {
+    return _accessor->isConstant();
+}
+
+// Returns true if the object contains a reference.
+template <typename T>
+bool Object<T>::isReference() const {
+    return _accessor->isReference();
 }
 
 }

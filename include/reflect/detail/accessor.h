@@ -27,6 +27,12 @@ public:
     // Retrieve the type information of the accessed type.
     TypeInfo const *getTypeInfo() const { return _typeInfo; }
 
+    // Returns true if the accessed type is constant.
+    bool isConstant() const { return _constant; }
+
+    // Returns true if the accessed type is a reference.
+    bool isReference() const { return _reference; }
+
 //----------------------------  Visitor Interface  -----------------------------
 public:
     class Visitor {
@@ -118,13 +124,18 @@ public:
 
 //----------------------------  Internal Interface  ----------------------------
 protected:
-    Accessor(TypeInfo const *typeInfo) : _typeInfo(typeInfo) { }
+    Accessor(TypeInfo const *typeInfo, bool constant, bool reference)
+    : _typeInfo(typeInfo), _constant(constant), _reference(reference) { }
     virtual ~Accessor() { }
 
 //-----------------------------  Private Members  ------------------------------
 private:
     // Type information of the accessed type.
     TypeInfo const *_typeInfo;
+    // Constant qualifier of the accessed type.
+    bool _constant;
+    // Reference qualifier of the accessed type.
+    bool _reference;
 };
 
 } }
