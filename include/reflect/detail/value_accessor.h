@@ -248,7 +248,7 @@ template <>
 class ValueAccessor<void> : public Accessor {
 public:
     // Default constructible.
-    ValueAccessor() : Accessor(TypeInfo::instance<void>(), true, false) { }
+    ValueAccessor() : Accessor(TypeInfo::instance<void>(), false, false) { }
 
     // Retrieve the global instance of this accessor.
     static Accessor const *instance() {
@@ -260,7 +260,7 @@ public:
 public:
     // Call visitor with a pointer to the value in storage.
     void *accept(Storage const &storage, Visitor &visitor) const override {
-        return visitor.visit(nullptr, true, true);
+        return visitor.visit(nullptr, false, true);
     }
 
 //-------------------------------  Construction  -------------------------------
@@ -280,6 +280,13 @@ public:
 
     // Destruct the value in storage.
     void destruct(Storage &storage) const override { }
+
+//-------------------------------  Value Access  -------------------------------
+public:
+    // Set the value in storage by copy-assigning the specified value.
+    bool set(Storage &storage, void const *value) const override {
+        return true;
+    }
 };
 
 } }
