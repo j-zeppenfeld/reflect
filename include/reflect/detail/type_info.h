@@ -40,6 +40,8 @@ public:
     // Retrieve the shortest name by which the type has been registered.
     std::string const &getName() const { return _name; }
 
+//-------------------------------  Base Classes  -------------------------------
+public:
     // Iterate over all registered base classes of the type.
     using BaseIterator = std::vector<Base>::const_iterator;
     IteratorRange<BaseIterator> getBases() const {
@@ -52,6 +54,8 @@ public:
         return _bases.end();
     }
 
+//-------------------------------  Conversions  --------------------------------
+public:
     // Iterate over all registered conversions from the type to other types.
     using ConversionIterator = std::vector<Conversion>::const_iterator;
     IteratorRange<ConversionIterator> getConversions() const {
@@ -96,7 +100,7 @@ private:
     TypeInfo(std::type_info const &typeInfo)
     : _name(typeInfo.name()), _nameSet(false) { }
 
-//---------------------------------  Members  ----------------------------------
+//-----------------------------  Private Members  ------------------------------
 private:
     // Shortest name by which the type has been registered.
     std::string _name;

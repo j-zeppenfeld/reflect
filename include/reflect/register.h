@@ -30,13 +30,13 @@ public:
     // a different type.
     Register(std::string name);
 
-//-------------------------------  Inheritance  --------------------------------
+//-------------------------------  Base Classes  -------------------------------
 public:
     // Register type T_Base as a base class of type T.
     template <typename T_Base>
     Register &base();
 
-//--------------------------------  Conversion  --------------------------------
+//-------------------------------  Conversions  --------------------------------
 public:
     // Register a conversion from type T to type T_Target.
     template <typename T_Target>
