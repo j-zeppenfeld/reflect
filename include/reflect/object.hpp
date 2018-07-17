@@ -173,33 +173,6 @@ Object<T>::~Object() {
 
 //-------------------------------  Value Access  -------------------------------
 
-// Retrieve the contained value by value.
-// Throws an exception if the contained value cannot be converted to type
-// T_Related.
-template <typename T>
-template <
-    typename T_Related,
-    Detail::EnableIf<
-        Detail::IsRelated<T_Related, T>::value &&
-        !std::is_void<T_Related>::value &&
-        !std::is_reference<T_Related>::value
-    >...
->
-T_Related Object<T>::get() const {
-    using T_Value = typename std::decay<T_Related>::type;
-
-    // Buffer into which the accessor can construct an instance of the returned
-    // type. This is needed if the accessor can only return by value.
-    Detail::Buffer<T_Value> buffer;
-
-    // Retrieve value from storage using the accessor.
-    void const *value = _accessor->getAsConst(
-        _storage, Detail::TypeInfo::instance<T_Value>(), &buffer
-    );
-    if(buffer.isConstructed()) return std::move(buffer.getValue());
-    else                       return *static_cast<T_Value const *>(value);
-}
-
 // Retrieve the contained value by mutable reference.
 // Throws an exception if the contained value cannot be converted to type
 // T_Related.
@@ -223,7 +196,7 @@ T_Related Object<T>::get() {
     );
 }
 
-// Retrieve the contained value by constant reference.
+// Retrieve the contained value by value or constant reference.
 // Throws an exception if the contained value cannot be converted to type
 // T_Related.
 template <typename T>
@@ -231,19 +204,51 @@ template <
     typename T_Related,
     Detail::EnableIf<
         Detail::IsRelated<T_Related, T>::value &&
-        std::is_reference<T_Related>::value &&
-        std::is_const<Detail::Decompose<T_Related>>::value
+        !std::is_void<T_Related>::value &&
+        (!std::is_reference<T_Related>::value ||
+         std::is_const<Detail::Decompose<T_Related>>::value)
     >...
 >
 T_Related Object<T>::get() const {
     using T_Value = typename std::decay<T_Related>::type;
 
-    // Retrieve value from storage using the accessor.
-    return *static_cast<T_Value const *>(
-        _accessor->getAsConst(
-            _storage, Detail::TypeInfo::instance<T_Value>()
-        )
-    );
+    struct Impl {
+        // Retrieve value from storage by constant reference using the accessor.
+        static T_Value const &get(std::true_type,
+                                  Detail::Accessor const *accessor,
+                                  Detail::Storage const &storage) {
+            return *static_cast<T_Value const *>(
+                accessor->getAsConst(
+                    storage, Detail::TypeInfo::instance<T_Value>()
+                )
+            );
+        }
+
+        // Retrieve value from storage by value using the accessor.
+        static T_Value get(std::false_type,
+                           Detail::Accessor const *accessor,
+                           Detail::Storage const &storage) {
+            // Buffer into which the accessor can construct an instance of the
+            // returned type. This is needed if the accessor can only return by
+            // value.
+            Detail::Buffer<T_Value> buffer;
+
+            // Retrieve value from storage using the accessor.
+            void const *value = accessor->getAsConst(
+                storage, Detail::TypeInfo::instance<T_Value>(), &buffer
+            );
+            if(buffer.isConstructed()) {
+                return std::move(buffer.getValue());
+            } else {
+                return *static_cast<T_Value const *>(value);
+            }
+        }
+    };
+
+    // Retrieve by value or constant reference.
+    return Impl::get(std::is_reference<T_Related>(),
+                     _accessor,
+                     _storage);
 }
 
 // Set the contained value without changing its reflected type.
@@ -260,16 +265,33 @@ template <
 void Object<T>::set(T_Derived &&value) {
     using T_Value = typename std::decay<T_Derived>::type;
 
-    // Assign value to storage using the accessor.
-    if(std::is_lvalue_reference<T_Derived>::value) {
-        _accessor->setAs(
-            _storage, Detail::TypeInfo::instance<T_Value>(), &value
-        );
-    } else {
-        _accessor->moveAs(
-            _storage, Detail::TypeInfo::instance<T_Value>(), &value
-        );
-    }
+    struct Impl {
+        // Copy-assign value to storage using the accessor.
+        static void set(std::true_type,
+                        Detail::Accessor const *accessor,
+                        Detail::Storage &storage,
+                        T_Value const &value) {
+            accessor->setAs(storage,
+                            Detail::TypeInfo::instance<T_Value>(),
+                            &value);
+        }
+
+        // Move-assign value to storage using the accessor.
+        static void set(std::false_type,
+                        Detail::Accessor const *accessor,
+                        Detail::Storage &storage,
+                        T_Value &value) {
+            accessor->moveAs(storage,
+                             Detail::TypeInfo::instance<T_Value>(),
+                             &value);
+        }
+    };
+
+    // Copy or move value depending on whether it is a reference.
+    Impl::set(std::is_lvalue_reference<T_Derived>(),
+              _accessor,
+              _storage,
+              value);
 }
 
 // Set the contained value without changing its reflected type by copy-

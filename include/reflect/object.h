@@ -143,19 +143,6 @@ public:
 
 //-------------------------------  Value Access  -------------------------------
 public:
-    // Retrieve the contained value by value.
-    // Throws an exception if the contained value cannot be converted to type
-    // T_Related.
-    template <
-        typename T_Related = Detail::DefaultReturnType<T const>,
-        Detail::EnableIf<
-            Detail::IsRelated<T_Related, T>::value &&
-            !std::is_void<T_Related>::value &&
-            !std::is_reference<T_Related>::value
-        >...
-    >
-    T_Related get() const;
-
     // Retrieve the contained value by mutable reference.
     // Throws an exception if the contained value cannot be converted to type
     // T_Related.
@@ -169,15 +156,16 @@ public:
     >
     T_Related get();
 
-    // Retrieve the contained value by constant reference.
+    // Retrieve the contained value by value or constant reference.
     // Throws an exception if the contained value cannot be converted to type
     // T_Related.
     template <
         typename T_Related = Detail::DefaultReturnType<T const>,
         Detail::EnableIf<
             Detail::IsRelated<T_Related, T>::value &&
-            std::is_reference<T_Related>::value &&
-            std::is_const<Detail::Decompose<T_Related>>::value
+            !std::is_void<T_Related>::value &&
+            (!std::is_reference<T_Related>::value ||
+             std::is_const<Detail::Decompose<T_Related>>::value)
         >...
     >
     T_Related get() const;
