@@ -27,7 +27,7 @@ template <
         std::is_constructible<T_Derived, T_Derived>::value &&
         !Detail::IsReflected<T_Derived>::value &&
         !Detail::IsSameTemplate<T_Derived, std::reference_wrapper<T>>::value
-    >...
+    >
 >
 Object<T>::Object(T_Derived &&other) {
     using T_Value = typename std::decay<T_Derived>::type;
@@ -58,7 +58,7 @@ template <
     typename T_Related,
     Detail::EnableIf<
         Detail::IsRelated<T_Related, T>::value
-    >...
+    >
 >
 Object<T>::Object(Object<T_Related> const &other) {
     // TODO: Verify that other's reflected type derives from T.
@@ -73,7 +73,7 @@ template <
     typename T_Related,
     Detail::EnableIf<
         Detail::IsRelated<T_Related, T>::value
-    >...
+    >
 >
 Object<T>::Object(Object<T_Related> &&other) {
     // TODO: Verify that other's reflected type derives from T.
@@ -88,7 +88,7 @@ template <
     Detail::EnableIf<
         Detail::IsDerived<T_Derived, T>::value &&
         !Detail::IsReflected<T_Derived>::value
-    >...
+    >
 >
 Object<T>::Object(std::reference_wrapper<T_Derived> &&other) {
     using T_Value = Detail::Decompose<T_Derived>;
@@ -107,7 +107,7 @@ template <
     Detail::EnableIf<
         Detail::IsReflected<T_Reflected<T_Related>>::value &&
         Detail::IsRelated<T_Related, T>::value
-    >...
+    >
 >
 Object<T>::Object(std::reference_wrapper<T_Reflected<T_Related>> &&other) {
     // TODO: Verify that other's reflected type derives from T.
@@ -123,7 +123,7 @@ template <
     Detail::EnableIf<
         Detail::IsReflected<T_Reflected<T_Related>>::value &&
         Detail::IsRelated<T_Related, T>::value
-    >...
+    >
 >
 Object<T>::Object(
     std::reference_wrapper<T_Reflected<T_Related> const> &&other
@@ -144,7 +144,7 @@ template <
         std::is_constructible<T, T_Args...>::value &&
         !Detail::IsReflected<T_Args...>::value &&
         !Detail::IsSameTemplate<T_Args..., std::reference_wrapper<T>>::value
-    >...
+    >
 >
 Object<T>::Object(T_Args &&...args) {
     _accessor = Detail::ValueAccessor<T>::construct(
@@ -159,7 +159,7 @@ template <
     typename T_Void,
     Detail::EnableIf<
         std::is_void<T_Void>::value
-    >...
+    >
 >
 Object<T>::Object() {
     _accessor = Detail::ValueAccessor<void>::instance();
@@ -183,7 +183,7 @@ template <
         Detail::IsRelated<T_Related, T>::value &&
         std::is_reference<T_Related>::value &&
         !std::is_const<Detail::Decompose<T_Related>>::value
-    >...
+    >
 >
 T_Related Object<T>::get() {
     using T_Value = typename std::decay<T_Related>::type;
@@ -207,7 +207,7 @@ template <
         !std::is_void<T_Related>::value &&
         (!std::is_reference<T_Related>::value ||
          std::is_const<Detail::Decompose<T_Related>>::value)
-    >...
+    >
 >
 T_Related Object<T>::get() const {
     using T_Value = typename std::decay<T_Related>::type;
@@ -260,7 +260,7 @@ template <
     Detail::EnableIf<
         Detail::IsDerived<T_Derived, T>::value &&
         !Detail::IsReflected<T_Derived>::value
-    >...
+    >
 >
 void Object<T>::set(T_Derived &&value) {
     using T_Value = typename std::decay<T_Derived>::type;
@@ -305,7 +305,7 @@ template <
     Detail::EnableIf<
         Detail::IsReflected<T_Reflected<T_Related>>::value &&
         Detail::IsRelated<T_Related, T>::value
-    >...
+    >
 >
 void Object<T>::set(T_Reflected<T_Related> const &value) {
     // Copy-assign value to storage using the accessor.
@@ -323,7 +323,7 @@ template <
     Detail::EnableIf<
         Detail::IsReflected<T_Reflected<T_Related>>::value &&
         Detail::IsRelated<T_Related, T>::value
-    >...
+    >
 >
 void Object<T>::set(T_Reflected<T_Related> &&value) {
     // Move-assign value to storage using the accessor.

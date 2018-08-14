@@ -20,7 +20,7 @@ template <typename T> class Reference;
 namespace Detail {
 
 // Simplified enable_if for better usability.
-enum struct EnableIfType { };
+enum struct EnableIfType { Enabled };
 
 template <bool condition>
 using EnableIf = typename std::enable_if<condition, EnableIfType>::type;

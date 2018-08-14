@@ -47,7 +47,7 @@ public:
             std::is_constructible<T_Derived, T_Derived>::value &&
             !Detail::IsReflected<T_Derived>::value &&
             !Detail::IsSameTemplate<T_Derived, std::reference_wrapper<T>>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     Object(T_Derived &&other);
 
@@ -66,7 +66,7 @@ public:
         typename T_Related,
         Detail::EnableIf<
             Detail::IsRelated<T_Related, T>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     Object(Object<T_Related> const &other);
 
@@ -77,7 +77,7 @@ public:
         typename T_Related,
         Detail::EnableIf<
             Detail::IsRelated<T_Related, T>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     Object(Object<T_Related> &&other);
 
@@ -88,7 +88,7 @@ public:
         Detail::EnableIf<
             Detail::IsDerived<T_Derived, T>::value &&
             !Detail::IsReflected<T_Derived>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     Object(std::reference_wrapper<T_Derived> &&other);
 
@@ -101,7 +101,7 @@ public:
         Detail::EnableIf<
             Detail::IsReflected<T_Reflected<T_Related>>::value &&
             Detail::IsRelated<T_Related, T>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     Object(std::reference_wrapper<T_Reflected<T_Related>> &&other);
 
@@ -111,7 +111,7 @@ public:
         Detail::EnableIf<
             Detail::IsReflected<T_Reflected<T_Related>>::value &&
             Detail::IsRelated<T_Related, T>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     Object(std::reference_wrapper<T_Reflected<T_Related> const> &&other);
 
@@ -124,7 +124,7 @@ public:
             std::is_constructible<T, T_Args...>::value &&
             !Detail::IsReflected<T_Args...>::value &&
             !Detail::IsSameTemplate<T_Args..., std::reference_wrapper<T>>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     Object(T_Args &&...args);
 
@@ -134,7 +134,7 @@ public:
         typename T_Void = T,
         Detail::EnableIf<
             std::is_void<T_Void>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     Object();
 
@@ -152,7 +152,7 @@ public:
             Detail::IsRelated<T_Related, T>::value &&
             std::is_reference<T_Related>::value &&
             !std::is_const<Detail::Decompose<T_Related>>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     T_Related get();
 
@@ -166,7 +166,7 @@ public:
             !std::is_void<T_Related>::value &&
             (!std::is_reference<T_Related>::value ||
              std::is_const<Detail::Decompose<T_Related>>::value)
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     T_Related get() const;
 
@@ -178,7 +178,7 @@ public:
         Detail::EnableIf<
             Detail::IsDerived<T_Derived, T>::value &&
             !Detail::IsReflected<T_Derived>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     void set(T_Derived &&value);
 
@@ -192,7 +192,7 @@ public:
         Detail::EnableIf<
             Detail::IsReflected<T_Reflected<T_Related>>::value &&
             Detail::IsRelated<T_Related, T>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     void set(T_Reflected<T_Related> const &value);
 
@@ -206,7 +206,7 @@ public:
         Detail::EnableIf<
             Detail::IsReflected<T_Reflected<T_Related>>::value &&
             Detail::IsRelated<T_Related, T>::value
-        >...
+        > = Detail::EnableIfType::Enabled
     >
     void set(T_Reflected<T_Related> &&value);
 
