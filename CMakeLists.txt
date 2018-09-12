@@ -60,3 +60,12 @@ add_executable(unit-tests EXCLUDE_FROM_ALL ${testsrc})
 target_link_libraries(unit-tests reflect-static)
 add_test(unit-tests unit-tests)
 add_dependencies(check unit-tests)
+
+# Code coverage.
+if(ENABLE_COVERAGE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftest-coverage")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif()
