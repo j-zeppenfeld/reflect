@@ -36,7 +36,6 @@ public:
 
     using element_type = T;
 
-//--------------------------  Creation / Destruction  --------------------------
 public:
     // Construct object containing a copy of other.
     // The reflected type of the object will be T_Derived.

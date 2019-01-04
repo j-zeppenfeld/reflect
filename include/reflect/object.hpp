@@ -15,8 +15,6 @@ namespace Reflect {
 //--                               Class Object                               --
 //------------------------------------------------------------------------------
 
-//--------------------------  Creation / Destruction  --------------------------
-
 // Construct object containing a copy of other.
 // The reflected type of the object will be T_Derived.
 template <typename T>

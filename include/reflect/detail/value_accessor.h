@@ -36,13 +36,6 @@ public:
         return &accessor;
     }
 
-//----------------------------  Visitor Interface  -----------------------------
-public:
-    // Call visitor with a pointer to the value in storage.
-    void *accept(Storage const &storage, Visitor &visitor) const override {
-        return visitor.visit(&storage.get<T>(), false, false);
-    }
-
 //-------------------------------  Construction  -------------------------------
 public:
     // Construct an instance of the accessed type within storage, forwarding
@@ -86,6 +79,13 @@ public:
         storage.destruct<T>();
     }
 
+//----------------------------  Visitor Interface  -----------------------------
+public:
+    // Call visitor with a pointer to the value in storage.
+    void *accept(Storage const &storage, Visitor &visitor) const override {
+        return visitor.visit(&storage.get<T>(), false, false);
+    }
+
 //-------------------------------  Value Access  -------------------------------
 public:
     // Set the value in storage by copy-assigning the specified value.
@@ -118,13 +118,6 @@ public:
     static Accessor const *instance() {
         static ValueAccessor accessor;
         return &accessor;
-    }
-
-//----------------------------  Visitor Interface  -----------------------------
-public:
-    // Call visitor with a pointer to the value in storage.
-    void *accept(Storage const &storage, Visitor &visitor) const override {
-        return visitor.visit(storage.get<T *>(), false, false);
     }
 
 //-------------------------------  Construction  -------------------------------
@@ -170,6 +163,13 @@ public:
         storage.destruct<T *>();
     }
 
+//----------------------------  Visitor Interface  -----------------------------
+public:
+    // Call visitor with a pointer to the value in storage.
+    void *accept(Storage const &storage, Visitor &visitor) const override {
+        return visitor.visit(storage.get<T *>(), false, false);
+    }
+
 //-------------------------------  Value Access  -------------------------------
 public:
     // Set the value in storage by copy-assigning the specified value.
@@ -204,14 +204,6 @@ public:
         return &accessor;
     }
 
-//----------------------------  Visitor Interface  -----------------------------
-public:
-    // Call visitor with a pointer to the value in storage.
-    void *accept(Storage const &storage, Visitor &visitor) const override {
-        return visitor.visit(const_cast<T *>(storage.get<T const *>()),
-                             true, false);
-    }
-
 //-------------------------------  Construction  -------------------------------
 public:
     // Construct a constant reference to value within storage.
@@ -238,6 +230,14 @@ public:
     void destruct(Storage &storage) const override {
         storage.destruct<T const *>();
     }
+
+//----------------------------  Visitor Interface  -----------------------------
+public:
+    // Call visitor with a pointer to the value in storage.
+    void *accept(Storage const &storage, Visitor &visitor) const override {
+        return visitor.visit(const_cast<T *>(storage.get<T const *>()),
+                             true, false);
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -254,13 +254,6 @@ public:
     static Accessor const *instance() {
         static ValueAccessor accessor;
         return &accessor;
-    }
-
-//----------------------------  Visitor Interface  -----------------------------
-public:
-    // Call visitor with a pointer to the value in storage.
-    void *accept(Storage const &storage, Visitor &visitor) const override {
-        return visitor.visit(nullptr, false, true);
     }
 
 //-------------------------------  Construction  -------------------------------
@@ -280,6 +273,13 @@ public:
 
     // Destruct the value in storage.
     void destruct(Storage &storage) const override { }
+
+//----------------------------  Visitor Interface  -----------------------------
+public:
+    // Call visitor with a pointer to the value in storage.
+    void *accept(Storage const &storage, Visitor &visitor) const override {
+        return visitor.visit(nullptr, false, true);
+    }
 
 //-------------------------------  Value Access  -------------------------------
 public:

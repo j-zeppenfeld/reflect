@@ -18,6 +18,8 @@ namespace Reflect { namespace Detail {
 //--                              Class Accessor                              --
 //------------------------------------------------------------------------------
 
+//-------------------------------  Value Access  -------------------------------
+
 namespace {
     // Visitor that converts the accessed value to another type.
     class ConversionVisitor : public Accessor::Visitor {

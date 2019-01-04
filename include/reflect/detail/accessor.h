@@ -22,28 +22,6 @@ class Accessor {
     Accessor(Accessor const &) = delete;
     Accessor &operator=(Accessor const &) = delete;
 
-//-----------------------------  Public Interface  -----------------------------
-public:
-    // Retrieve the type information of the accessed type.
-    TypeInfo const *getTypeInfo() const { return _typeInfo; }
-
-    // Returns true if the accessed type is constant.
-    bool isConstant() const { return _constant; }
-
-    // Returns true if the accessed type is a reference.
-    bool isReference() const { return _reference; }
-
-//----------------------------  Visitor Interface  -----------------------------
-public:
-    class Visitor {
-    public:
-        virtual void *visit(void *value, bool constant, bool temporary) = 0;
-    };
-
-    // Call visitor with a pointer to the value in storage, which must be of
-    // the accessed type.
-    virtual void *accept(Storage const &storage, Visitor &visitor) const = 0;
-
 //-------------------------------  Construction  -------------------------------
 public:
     // Construct a copy of value within storage.
@@ -69,6 +47,17 @@ public:
 
     // Destruct the value in storage, which must be of the accessed type.
     virtual void destruct(Storage &storage) const = 0;
+
+//----------------------------  Visitor Interface  -----------------------------
+public:
+    class Visitor {
+    public:
+        virtual void *visit(void *value, bool constant, bool temporary) = 0;
+    };
+
+    // Call visitor with a pointer to the value in storage, which must be of
+    // the accessed type.
+    virtual void *accept(Storage const &storage, Visitor &visitor) const = 0;
 
 //-------------------------------  Value Access  -------------------------------
 public:
@@ -121,6 +110,17 @@ public:
     void moveAs(Storage &storage,
                 Accessor const *accessor,
                 Storage &value) const;
+
+//-----------------------------  Type Reflection  ------------------------------
+public:
+    // Retrieve the type information of the accessed type.
+    TypeInfo const *getTypeInfo() const { return _typeInfo; }
+
+    // Returns true if the accessed type is constant.
+    bool isConstant() const { return _constant; }
+
+    // Returns true if the accessed type is a reference.
+    bool isReference() const { return _reference; }
 
 //----------------------------  Internal Interface  ----------------------------
 protected:
