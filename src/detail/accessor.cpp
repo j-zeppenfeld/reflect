@@ -226,7 +226,11 @@ void Accessor::setAs(Storage &storage,
         , _typeInfo(typeInfo) { }
 
         void *visit(void *value, bool constant, bool temporary) override {
-            _accessor->setAs(_storage, _typeInfo, value);
+            if(temporary && !constant) {
+                _accessor->moveAs(_storage, _typeInfo, value);
+            } else {
+                _accessor->setAs(_storage, _typeInfo, value);
+            }
             return nullptr;
         }
 
