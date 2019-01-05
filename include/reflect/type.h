@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Johannes Zeppenfeld
+// Copyright (c) 2019 Johannes Zeppenfeld
 // SPDX-License-Identifier: MIT
 
 #ifndef REFLECT_TYPE_H
