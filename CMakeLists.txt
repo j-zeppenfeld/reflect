@@ -10,6 +10,7 @@ set(libsrc
 
 set(testsrc
     tests/common/main.cpp
+    tests/conversion.cpp
     tests/object_access.cpp
     tests/object_construct.cpp
 )
