@@ -144,42 +144,41 @@ public:
 public:
     // Retrieve the contained value by mutable reference.
     // Throws an exception if the contained value cannot be converted to type
-    // T_Related.
+    // T_Return.
     template <
-        typename T_Related = Detail::DefaultReturnType<T>,
+        typename T_Return = Detail::DefaultReturnType<T>,
         Detail::EnableIf<
-            Detail::IsRelated<T_Related, T>::value &&
-            std::is_reference<T_Related>::value &&
-            !std::is_const<Detail::Decompose<T_Related>>::value
+            Detail::IsRelated<T_Return, T>::value &&
+            std::is_reference<T_Return>::value &&
+            !std::is_const<Detail::Decompose<T_Return>>::value
         > = Detail::EnableIfType::Enabled
     >
-    T_Related get();
+    T_Return get();
 
     // Retrieve the contained value by value or constant reference.
     // Throws an exception if the contained value cannot be converted to type
-    // T_Related.
+    // T_Return.
     template <
-        typename T_Related = Detail::DefaultReturnType<T const>,
+        typename T_Return = Detail::DefaultReturnType<T const>,
         Detail::EnableIf<
-            Detail::IsRelated<T_Related, T>::value &&
-            !std::is_void<T_Related>::value &&
-            (!std::is_reference<T_Related>::value ||
-             std::is_const<Detail::Decompose<T_Related>>::value)
+            (!std::is_reference<T_Return>::value &&
+             !std::is_void<T_Return>::value) ||
+            (std::is_const<Detail::Decompose<T_Return>>::value &&
+             Detail::IsRelated<T_Return, T>::value)
         > = Detail::EnableIfType::Enabled
     >
-    T_Related get() const;
+    T_Return get() const;
 
     // Set the contained value without changing its reflected type.
     // Throws an exception if the contained value is constant or cannot be set
-    // from type T_Derived.
+    // from type T_Value.
     template <
-        typename T_Derived,
+        typename T_Value,
         Detail::EnableIf<
-            Detail::IsDerived<T_Derived, T>::value &&
-            !Detail::IsReflected<T_Derived>::value
+            !Detail::IsReflected<T_Value>::value
         > = Detail::EnableIfType::Enabled
     >
-    void set(T_Derived &&value);
+    void set(T_Value &&value);
 
     // Set the contained value without changing its reflected type by copy-
     // assigning the contained value of another object.
@@ -187,13 +186,12 @@ public:
     // from the other object's reflected type.
     template <
         template <typename> class T_Reflected,
-        typename T_Related,
+        typename T_Value,
         Detail::EnableIf<
-            Detail::IsReflected<T_Reflected<T_Related>>::value &&
-            Detail::IsRelated<T_Related, T>::value
+            Detail::IsReflected<T_Reflected<T_Value>>::value
         > = Detail::EnableIfType::Enabled
     >
-    void set(T_Reflected<T_Related> const &value);
+    void set(T_Reflected<T_Value> const &value);
 
     // Set the contained value without changing its reflected type by move-
     // assigning the contained value of another object.
@@ -201,13 +199,12 @@ public:
     // from the other object's reflected type.
     template <
         template <typename> class T_Reflected,
-        typename T_Related,
+        typename T_Value,
         Detail::EnableIf<
-            Detail::IsReflected<T_Reflected<T_Related>>::value &&
-            Detail::IsRelated<T_Related, T>::value
+            Detail::IsReflected<T_Reflected<T_Value>>::value
         > = Detail::EnableIfType::Enabled
     >
-    void set(T_Reflected<T_Related> &&value);
+    void set(T_Reflected<T_Value> &&value);
 
 //-----------------------------  Type Reflection  ------------------------------
 public:
