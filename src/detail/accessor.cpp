@@ -158,7 +158,10 @@ void *Accessor::getAs(Storage const &storage,
     void *result = accept(storage, visitor);
     if(!result) {
         throw std::runtime_error(
-            "Accessing value as incompatible type."
+            "Could not retrieve type '" + _typeInfo->getName()
+            + (_constant ? " const" : "") + (_reference ? " &" : "")
+            + "' as type '" + typeInfo->getName() + (buffer ? "" : " &")
+            + "'."
         );
     }
     return result;
@@ -189,7 +192,10 @@ void const *Accessor::getAsConst(Storage const &storage,
     void const *result = accept(storage, visitor);
     if(!result) {
         throw std::runtime_error(
-            "Accessing value as incompatible type."
+            "Could not retrieve type '" + _typeInfo->getName()
+            + " const" + (_reference ? " &" : "")
+            + "' as type '" + typeInfo->getName() + (buffer ? "" : " const &")
+            + "'."
         );
     }
     return result;
@@ -205,7 +211,9 @@ void Accessor::setAs(Storage &storage,
     }
     if(!convertAndSet(this, storage, typeInfo, value)) {
         throw std::runtime_error(
-            "Setting value from incompatible type."
+            "Could not set type '" + _typeInfo->getName()
+            + (_constant ? " const" : "") + (_reference ? " &" : "")
+            + "' from type '" + typeInfo->getName() + "'."
         );
     }
 }
@@ -253,7 +261,9 @@ void Accessor::moveAs(Storage &storage,
     }
     if(!convertAndMove(this, storage, typeInfo, value)) {
         throw std::runtime_error(
-            "Setting value from incompatible type."
+            "Could not set type '" + _typeInfo->getName()
+            + (_constant ? " const" : "") + (_reference ? " &" : "")
+            + "' from type '" + typeInfo->getName() + "'."
         );
     }
 }
