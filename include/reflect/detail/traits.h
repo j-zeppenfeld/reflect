@@ -95,7 +95,7 @@ struct DecomposeImpl {
     using type = typename std::conditional<
         std::is_array<U>::value,
         typename std::remove_extent<U>::type *,
-        typename std::conditional< 
+        typename std::conditional<
             std::is_function<U>::value,
             typename std::add_pointer<U>::type,
             U

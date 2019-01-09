@@ -53,7 +53,7 @@ public:
     // Construct object containing a copy of the other object's value.
     // The reflected type of the object will be equivalent to that of other.
     Object(Object<T> const &other);
-    
+
     // Construct object containing the other object's moved value.
     // The reflected type of the object will be equivalent to that of other.
     Object(Object<T> &&other);
