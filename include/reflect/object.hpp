@@ -160,7 +160,7 @@ template <
     >
 >
 Object<T>::Object() {
-    _accessor = Detail::ValueAccessor<void>::instance();
+    _accessor = Detail::ValueAccessor<void>::construct(_storage);
 }
 
 // Destroy the object and its contents.

@@ -26,7 +26,7 @@ class ValueAccessor : public Accessor {
     static_assert(std::is_same<T, typename std::decay<T>::type>::value,
                   "Internal error: Accessor instance must be decomposed.");
 
-public:
+private:
     // Default constructible.
     ValueAccessor() : Accessor(TypeInfo::instance<T>(), false, false) { }
 
@@ -110,7 +110,7 @@ class ValueAccessor<T &> : public Accessor {
     static_assert(std::is_same<T, typename std::decay<T>::type>::value,
                   "Internal error: Accessor instance must be decomposed.");
 
-public:
+private:
     // Default constructible.
     ValueAccessor() : Accessor(TypeInfo::instance<T>(), false, true) { }
 
@@ -194,7 +194,7 @@ class ValueAccessor<T const &> : public Accessor {
     static_assert(std::is_same<T, typename std::decay<T>::type>::value,
                   "Internal error: Accessor instance must be decomposed.");
 
-public:
+private:
     // Default constructible.
     ValueAccessor() : Accessor(TypeInfo::instance<T>(), true, true) { }
 
@@ -235,8 +235,9 @@ public:
 public:
     // Call visitor with a pointer to the value in storage.
     void *accept(Storage const &storage, Visitor &visitor) const override {
-        return visitor.visit(const_cast<T *>(storage.get<T const *>()),
-                             true, false);
+        return visitor.visit(
+            const_cast<T *>(storage.get<T const *>()), true, false
+        );
     }
 };
 
@@ -246,7 +247,7 @@ public:
 // Dummy accessor for void values.
 template <>
 class ValueAccessor<void> : public Accessor {
-public:
+private:
     // Default constructible.
     ValueAccessor() : Accessor(TypeInfo::instance<void>(), false, false) { }
 
@@ -258,7 +259,12 @@ public:
 
 //-------------------------------  Construction  -------------------------------
 public:
-    // Allocate a copy of source within target.
+    // Return dummy accessor for a void value within storage.
+    static Accessor const *construct(Storage &storage) {
+        return instance();
+    }
+
+    // Construct a copy of value within storage.
     Accessor const *constructCopy(Storage &storage,
                                   Storage const &value) const override {
         return this;
