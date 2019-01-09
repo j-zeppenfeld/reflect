@@ -13,6 +13,11 @@ namespace Reflect {
 //--                              Class Register                              --
 //------------------------------------------------------------------------------
 
+template <typename T>
+Register<T>::Register(std::string name) {
+    Detail::TypeInfo::mutableInstance<T>()->registerName(std::move(name));
+}
+
 //-------------------------------  Inheritance  --------------------------------
 
 // Register type T_Base as a base class of type T.

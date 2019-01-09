@@ -82,6 +82,12 @@ public:
         return &typeInfo;
     }
 
+    // Register a name for the type.
+    void registerName(std::string name) {
+        _name = std::move(name);
+        _nameSet = true;
+    }
+
     // Register a base class for the type.
     void registerBase(Base base) {
         _bases.push_back(std::move(base));
