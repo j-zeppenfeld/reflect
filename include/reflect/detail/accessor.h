@@ -10,6 +10,7 @@ namespace Reflect { namespace Detail {
 
 // Uses.
 template <typename T> class Buffer;
+class Property;
 class Storage;
 class TypeInfo;
 
@@ -121,6 +122,16 @@ public:
 
     // Returns true if the accessed type is a reference.
     bool isReference() const { return _reference; }
+
+//---------------------------  Property Reflection  ----------------------------
+public:
+    // Construct a reference to property of owner within storage.
+    // Owner must be of the accessed type, and storage must be unallocated.
+    // Returns an accessor for the constructed value in storage.
+    virtual Accessor const *constructProperty(Storage &storage,
+                                              Property const &property,
+                                              Storage const &owner,
+                                              bool constant) const;
 
 //----------------------------  Internal Interface  ----------------------------
 protected:

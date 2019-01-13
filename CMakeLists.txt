@@ -5,6 +5,8 @@ project(reflect LANGUAGES CXX VERSION 0.1)
 
 set(libsrc
     src/detail/accessor.cpp
+    src/detail/property.cpp
+    src/detail/type_info.cpp
     src/type.cpp
 )
 
@@ -12,6 +14,7 @@ set(testsrc
     tests/common/main.cpp
     tests/object_access.cpp
     tests/object_construct.cpp
+    tests/property.cpp
 )
 
 include_directories(include)

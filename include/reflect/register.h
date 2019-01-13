@@ -51,6 +51,36 @@ public:
     // conversion function.
     template <typename T_Target, typename T_Func>
     Register &conversion(T_Func &&function);
+
+//--------------------------------  Properties  --------------------------------
+public:
+    // Register a member pointer or accessor function as a property of type T
+    // with the specified name.
+    template <typename T_Accessor>
+    Register &property(std::string name, T_Accessor &&accessor);
+
+    // Register a pair of get and set accessor functions as a property of type T
+    // with the specified name.
+    template <typename T_GetAccessor, typename T_SetAccessor>
+    Register &property(std::string name,
+                       T_GetAccessor &&getAccessor,
+                       T_SetAccessor &&setAccessor);
+
+    // Register a pair of const and non-const getter methods as a property of
+    // type T with the specified name.
+    template <typename T_Owner, typename T_Mutable, typename T_Constant>
+    Register &property(std::string name,
+                       T_Mutable (T_Owner::*getMutableFunction)(),
+                       T_Constant (T_Owner::*getConstantFunction)() const);
+
+    // Register a pair of const and non-const getter methods together with a
+    // set accessor function as a property of type T with the specified name.
+    template <typename T_Owner, typename T_Mutable, typename T_Constant,
+              typename T_SetAccessor>
+    Register &property(std::string name,
+                       T_Mutable (T_Owner::*getMutableFunction)(),
+                       T_Constant (T_Owner::*getConstantFunction)() const,
+                       T_SetAccessor &&setAccesor);
 };
 
 }

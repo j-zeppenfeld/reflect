@@ -359,6 +359,34 @@ bool Object<T>::isReference() const {
     return _accessor->isReference();
 }
 
+//---------------------------  Property Reflection  ----------------------------
+
+// Retrieve a reference to the property associated with name.
+template <typename T>
+Object<void> Object<T>::getProperty(std::string const &name) {
+    return {
+        _accessor->getTypeInfo()->getProperty(name), _accessor, _storage, false
+    };
+}
+
+template <typename T>
+Object<void> Object<T>::getProperty(std::string const &name) const {
+    return {
+        _accessor->getTypeInfo()->getProperty(name), _accessor, _storage, true
+    };
+}
+
+// Construct object referencing the specified property of the accessed owner.
+template <typename T>
+Object<T>::Object(Detail::Property const &property,
+                  Detail::Accessor const *accessor,
+                  Detail::Storage const &owner,
+                  bool constant) {
+    _accessor = accessor->constructProperty(
+        _storage, property, owner, constant
+    );
+}
+
 }
 //--                          End Namespace Reflect                           --
 //------------------------------------------------------------------------------

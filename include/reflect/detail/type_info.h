@@ -10,7 +10,7 @@
 #include "conversion.h"
 //#include "extension.h"
 //#include "function.h"
-//#include "property.h"
+#include "property.h"
 
 #include "iterator_range.h"
 
@@ -68,6 +68,24 @@ public:
         return _conversions.end();
     }
 
+//--------------------------------  Properties  --------------------------------
+public:
+    // Retrieve the property with name that has been registered for the type.
+    // Throws an exception if no property with name has been registered.
+    Property const &getProperty(std::string const &name) const;
+
+    // Iterate over all registered properties of the type.
+    using PropertyIterator = std::vector<Property>::const_iterator;
+    IteratorRange<PropertyIterator> getProperties() const {
+        return { beginProperties(), endProperties() };
+    }
+    PropertyIterator beginProperties() const {
+        return _properties.begin();
+    }
+    PropertyIterator endProperties() const {
+        return _properties.end();
+    }
+
 //-------------------------------  Registration  -------------------------------
 public:
     // Retrieve the global type information instance of type T.
@@ -98,6 +116,11 @@ public:
         _conversions.push_back(std::move(conversion));
     }
 
+    // Register a property for the type.
+    void registerProperty(Property property) {
+        _properties.push_back(std::move(property));
+    }
+
 //----------------------------  Private Interface  -----------------------------
 private:
     // Allow creation of type information only through TypeInfo::instance.
@@ -123,8 +146,8 @@ private:
 //    std::vector<Extension> _extensions;
 //    // List of functions registered for the type.
 //    std::vector<Function> _functions;
-//    // List of properties registered for the type.
-//    std::vector<Property> _properties;
+    // List of properties registered for the type.
+    std::vector<Property> _properties;
 };
 
 } }

@@ -99,6 +99,16 @@ public:
         storage.get<T>() = std::move(*static_cast<T *>(value));
         return true;
     }
+
+//---------------------------  Property Reflection  ----------------------------
+public:
+    // Construct a reference to property of owner within storage.
+    Accessor const *constructProperty(Storage &storage,
+                                      Property const &property,
+                                      Storage const &owner,
+                                      bool constant) const override {
+        return property.construct(storage, &owner.get<T>(), constant, false);
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -183,6 +193,16 @@ public:
         *storage.get<T *>() = std::move(*static_cast<T *>(value));
         return true;
     }
+
+//---------------------------  Property Reflection  ----------------------------
+public:
+    // Construct a reference to property of owner within storage.
+    Accessor const *constructProperty(Storage &storage,
+                                      Property const &property,
+                                      Storage const &owner,
+                                      bool constant) const override {
+        return property.construct(storage, owner.get<T *>(), constant, false);
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -239,6 +259,18 @@ public:
             const_cast<T *>(storage.get<T const *>()), true, false
         );
     }
+
+//---------------------------  Property Reflection  ----------------------------
+public:
+    // Construct a reference to property of owner within storage.
+    Accessor const *constructProperty(Storage &storage,
+                                      Property const &property,
+                                      Storage const &owner,
+                                      bool constant) const override {
+        return property.construct(
+            storage, const_cast<T *>(owner.get<T const *>()), true, false
+        );
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -292,6 +324,16 @@ public:
     // Set the value in storage by copy-assigning the specified value.
     bool set(Storage &storage, void const *value) const override {
         return true;
+    }
+
+//---------------------------  Property Reflection  ----------------------------
+public:
+    // Construct a reference to property of owner within storage.
+    Accessor const *constructProperty(Storage &storage,
+                                      Property const &property,
+                                      Storage const &owner,
+                                      bool constant) const override {
+        return property.construct(storage, nullptr, false, true);
     }
 };
 

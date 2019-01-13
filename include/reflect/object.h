@@ -16,6 +16,7 @@ namespace Reflect {
 
 // Uses.
 namespace Detail { class Accessor; }
+namespace Detail { class Property; }
 class Type;
 
 //------------------------------------------------------------------------------
@@ -221,6 +222,21 @@ public:
     // Returns true if the object contains a reference to a value not owned by
     // the object.
     bool isReference() const;
+
+//---------------------------  Property Reflection  ----------------------------
+public:
+    // Retrieve a reference to the property associated with name.
+    Object<void> getProperty(std::string const &name);
+    Object<void> getProperty(std::string const &name) const;
+
+//----------------------------  Private Interface  -----------------------------
+private:
+    // Construct object referencing the specified property of the accessed
+    // owner.
+    Object(Detail::Property const &property,
+           Detail::Accessor const *accessor,
+           Detail::Storage const &owner,
+           bool constant);
 
 //-----------------------------  Private Members  ------------------------------
 private:

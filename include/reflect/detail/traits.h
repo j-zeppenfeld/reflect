@@ -116,6 +116,33 @@ using DefaultReturnType = typename std::conditional<
     std::add_lvalue_reference<T>
 >::type::type;
 
+// Returns T_To if T_To is derived from T_From or T_From is void.
+// Otherwise returns T_From.
+template <typename T_From, typename T_To>
+using Promote = typename std::conditional<
+    std::is_base_of<T_From, T_To>::value || std::is_void<T_From>::value,
+    T_To,
+    T_From
+>::type;
+
+// Returns T_To if T_From is derived from T_To or T_From is void.
+// Otherwise returns T_From.
+template <typename T_From, typename T_To>
+using Demote = typename std::conditional<
+    std::is_base_of<T_To, T_From>::value || std::is_void<T_From>::value,
+    T_To,
+    T_From
+>::type;
+
+// Returns T_To if T_From is void.
+// Otherwise returns T_From.
+template <typename T_From, typename T_To>
+using Preserve = typename std::conditional<
+    std::is_void<T_From>::value,
+    T_To,
+    T_From
+>::type;
+
 } }
 //--                      End Namespace Reflect::Detail                       --
 //------------------------------------------------------------------------------

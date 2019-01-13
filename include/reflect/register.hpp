@@ -3,6 +3,8 @@
 
 #include "detail/accessor.h"
 #include "detail/buffer.h"
+#include "detail/property.h"
+#include "detail/property_accessor.h"
 #include "detail/type_info.h"
 
 //------------------------------------------------------------------------------
@@ -202,6 +204,138 @@ Register<T> &Register<T>::conversion(T_Func &&function) {
         )
     );
 
+    return *this;
+}
+
+//--------------------------------  Properties  --------------------------------
+
+// Register a member pointer or accessor function as a property of type T
+// with the specified name.
+template <typename T>
+template <typename T_Accessor>
+Register<T> &Register<T>::property(std::string name, T_Accessor &&accessor) {
+    // Register property in the type information instance for T.
+    Detail::TypeInfo::mutableInstance<T>()->registerProperty(
+        Detail::Property(
+            std::move(name),
+            std::unique_ptr<Detail::PropertyAccessor<void, void>>(
+                new Detail::PropertyAccessor<T, void, T_Accessor>(
+                    true,
+                    std::forward<T_Accessor>(accessor)
+                )
+            ),
+            std::unique_ptr<Detail::PropertyAccessor<void, void>>(
+                new Detail::PropertyAccessor<T const, void, T_Accessor>(
+                    true,
+                    std::forward<T_Accessor>(accessor)
+                )
+            )
+        )
+    );
+    return *this;
+}
+
+// Register a pair of get and set accessor functions as a property of type T
+// with the specified name.
+template <typename T>
+template <typename T_GetAccessor, typename T_SetAccessor>
+Register<T> &Register<T>::property(std::string name,
+                                   T_GetAccessor &&getAccessor,
+                                   T_SetAccessor &&setAccessor) {
+    // Register property in the type information instance for T.
+    Detail::TypeInfo::mutableInstance<T>()->registerProperty(
+        Detail::Property(
+            std::move(name),
+            std::unique_ptr<Detail::PropertyAccessor<void, void>>(
+                new Detail::PropertyAccessor<T, void,
+                                             T_SetAccessor,
+                                             T_GetAccessor>(
+                    true,
+                    std::forward<T_SetAccessor>(setAccessor),
+                    std::forward<T_GetAccessor>(getAccessor)
+                )
+            ),
+            std::unique_ptr<Detail::PropertyAccessor<void, void>>(
+                new Detail::PropertyAccessor<T const, void,
+                                             T_SetAccessor,
+                                             T_GetAccessor>(
+                    true,
+                    std::forward<T_SetAccessor>(setAccessor),
+                    std::forward<T_GetAccessor>(getAccessor)
+                )
+            )
+        )
+    );
+    return *this;
+}
+
+// Register a pair of const and non-const getter methods as a property of
+// type T with the specified name.
+template <typename T>
+template <typename T_Owner, typename T_Mutable, typename T_Constant>
+Register<T> &Register<T>::property(
+    std::string name,
+    T_Mutable (T_Owner::*getMutableFunction)(),
+    T_Constant (T_Owner::*getConstantFunction)() const
+) {
+    // Register property in the type information instance for T.
+    Detail::TypeInfo::mutableInstance<T>()->registerProperty(
+        Detail::Property(
+            std::move(name),
+            std::unique_ptr<Detail::PropertyAccessor<void, void>>(
+                new Detail::PropertyAccessor<T, void,
+                                             T_Mutable (T_Owner::*)()>(
+                    true,
+                    getMutableFunction
+                )
+            ),
+            std::unique_ptr<Detail::PropertyAccessor<void, void>>(
+                new Detail::PropertyAccessor<T const, void,
+                                             T_Constant (T_Owner::*)() const>(
+                    true,
+                    getConstantFunction
+                )
+            )
+        )
+    );
+    return *this;
+}
+
+// Register a pair of const and non-const getter methods together with a
+// set accessor function as a property of type T with the specified name.
+template <typename T>
+template <typename T_Owner, typename T_Mutable, typename T_Constant,
+          typename T_SetAccessor>
+Register<T> &Register<T>::property(
+    std::string name,
+    T_Mutable (T_Owner::*getMutableFunction)(),
+    T_Constant (T_Owner::*getConstantFunction)() const,
+    T_SetAccessor &&setAccessor
+) {
+    // Register property in the type information instance for T.
+    Detail::TypeInfo::mutableInstance<T>()->registerProperty(
+        Detail::Property(
+            std::move(name),
+            std::unique_ptr<Detail::PropertyAccessor<void, void>>(
+                new Detail::PropertyAccessor<T, void,
+                                             T_SetAccessor,
+                                             T_Mutable (T_Owner::*)()>(
+                    true,
+                    std::forward<T_SetAccessor>(setAccessor),
+                    getMutableFunction
+                )
+            ),
+            std::unique_ptr<Detail::PropertyAccessor<void, void>>(
+                new Detail::PropertyAccessor<T const, void,
+                                             T_SetAccessor,
+                                             T_Constant (T_Owner::*)() const>(
+                    true,
+                    std::forward<T_SetAccessor>(setAccessor),
+                    getConstantFunction
+                )
+            )
+        )
+    );
     return *this;
 }
 

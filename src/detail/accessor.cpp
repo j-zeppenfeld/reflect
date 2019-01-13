@@ -301,6 +301,38 @@ void Accessor::moveAs(Storage &storage,
     accessor->accept(value, visitor);
 }
 
+//---------------------------  Property Reflection  ----------------------------
+// Construct a reference to property of owner within storage.
+Accessor const *Accessor::constructProperty(Storage &storage,
+                                            Property const &property,
+                                            Storage const &owner,
+                                            bool constant) const {
+    // Create visitor to retrieve accessed value.
+    class Visitor : public Accessor::Visitor {
+    public:
+        Visitor(Storage &storage,
+                Property const &property,
+                bool constant)
+        : _storage(storage)
+        , _property(property)
+        , _constant(constant) { }
+
+        void *visit(void *value, bool constant, bool temporary) {
+            constant = constant || (_constant && !temporary);
+            return const_cast<Accessor *>(_property.construct(
+                _storage, value, constant, temporary
+            ));
+        }
+
+    private:
+        Storage &_storage;
+        Property const &_property;
+        bool _constant;
+    } visitor(storage, property, constant);
+
+    return static_cast<Accessor const *>(accept(owner, visitor));
+}
+
 } }
 //--                      End Namespace Reflect::Detail                       --
 //------------------------------------------------------------------------------
